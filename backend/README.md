@@ -6,9 +6,11 @@ Real-time assistive vision API powered by YOLOv8 and Claude Haiku.
 
 ### Prerequisites
 - Python 3.10+
-- [uv](https://github.com/astral-sh/uv) package manager
+- Choose one:
+  - [uv](https://github.com/astral-sh/uv) package manager (recommended)
+  - Standard pip/venv
 
-### Setup
+### Setup (Option 1: uv)
 
 1. Install dependencies:
 ```bash
@@ -25,6 +27,39 @@ cp .env.example .env
 3. Run the server:
 ```bash
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Setup (Option 2: pip/venv)
+
+1. Run setup script:
+```bash
+cd backend
+
+# Windows
+setup_venv.bat
+
+# Linux/Mac
+bash setup_venv.sh
+```
+
+2. Activate virtual environment:
+```bash
+# Windows
+venv\Scripts\activate
+
+# Linux/Mac
+source venv/bin/activate
+```
+
+3. Configure environment:
+```bash
+cp .env.example .env
+# Edit .env with your Keywords AI API key
+```
+
+4. Run the server:
+```bash
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ## API Endpoints
