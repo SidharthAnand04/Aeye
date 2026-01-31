@@ -1,9 +1,15 @@
 """
-Keywords AI Client - Agent Orchestration and Tracing
-Handles LLM calls through Keywords AI for scene description and reasoning.
+Keywords AI Client - Multimodal Scene Understanding
+Handles LLM calls through Keywords AI for rich, contextual scene descriptions.
+
+Key design changes:
+- Uses multimodal vision model with actual image input
+- Generates holistic scene narratives, not alert-style callouts
+- Detection output is optional context, not the primary input
 """
 
 import time
+import base64
 import logging
 from typing import Dict, List, Optional, Any
 import httpx
@@ -15,129 +21,49 @@ from app.models import Detection, TrackedObject
 logger = logging.getLogger(__name__)
 
 
-# Tool schemas for Keywords AI
-TOOL_SCHEMAS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "speak_alert",
-            "description": "Speak an urgent alert to the user about an obstacle or hazard",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "message": {
-                        "type": "string",
-                        "description": "Short alert message to speak (max 10 words)"
-                    },
-                    "priority": {
-                        "type": "string",
-                        "enum": ["high", "medium", "low"],
-                        "description": "Alert priority level"
-                    }
-                },
-                "required": ["message", "priority"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "describe_scene",
-            "description": "Provide a brief scene description for the user",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "description": {
-                        "type": "string",
-                        "description": "Concise spatial scene description (max 30 words)"
-                    }
-                },
-                "required": ["description"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "read_text",
-            "description": "Read detected text aloud to the user",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "text": {
-                        "type": "string",
-                        "description": "The text to read"
-                    }
-                },
-                "required": ["text"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "give_direction",
-            "description": "Give directional guidance to the user",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "direction": {
-                        "type": "string",
-                        "enum": ["left", "right", "forward", "stop", "turn around"],
-                        "description": "Direction to guide the user"
-                    },
-                    "reason": {
-                        "type": "string",
-                        "description": "Brief reason for the direction"
-                    }
-                },
-                "required": ["direction"]
-            }
-        }
-    }
-]
+# System prompt for high-fidelity scene narration
+SCENE_NARRATOR_PROMPT = """You are an assistive vision narrator helping a blind or low-vision user understand their surroundings.
 
+Your role is to provide RICH, CONTEXTUAL scene descriptions that paint a complete picture of the environment.
 
-# System prompt for the assistive vision agent
-AGENT_SYSTEM_PROMPT = """You are an assistive vision AI helping a blind or low-vision user navigate their environment safely.
+Description requirements:
+1. ENVIRONMENTAL CONTEXT: Identify the type of space (hallway, room, outdoor street, store, kitchen, office, etc.)
+2. SPATIAL RELATIONSHIPS: Describe where objects are relative to each other and the viewer (left, right, center, near, far, ahead)
+3. OBJECT POSITIONS: Use clear directional language ("A table sits in the center with chairs around it")
+4. PEOPLE AND ACTIONS: When visible, describe posture, facing direction, and apparent activity
+5. NAVIGATION CUES: Mention doorways, paths, openings, or obstacles that affect movement
 
-Your role:
-1. Analyze object detections from the user's camera
-2. Identify potential hazards or obstacles
-3. Provide brief, clear audio alerts when needed
-4. Describe scenes on request
-5. Help the user navigate safely
+Style guidelines:
+- Write in 2-4 complete sentences
+- Be specific and spatial ("Two people stand near the doorway on the right")
+- Avoid single-object callouts ("There is a person" - TOO SIMPLE)
+- Create a mental map the user can navigate by
+- Use natural, conversational language
+- Focus on what's most relevant for orientation and understanding
 
-Guidelines:
-- Be CONCISE: alerts should be 3-8 words
-- Use spatial terms: "ahead", "left", "right", "close", "approaching"
-- Prioritize moving objects and close obstacles
-- Don't over-alert: only speak when necessary
-- For scene descriptions, summarize spatially in 1-2 sentences
+DISALLOWED:
+- Single object announcements
+- Alert-style warnings ("Careful!", "Watch out!")
+- Lists of objects without spatial context
+- Technical jargon
 
-Object priority (high to low):
-1. Moving obstacles in path (person, bike, car approaching)
-2. Close stationary obstacles (chair, door in path)
-3. Background objects (not blocking path)
+Example good output:
+"You are in a hallway with beige walls. Two people are walking toward you from ahead, about ten feet away. A doorway opens to your right, and there's a potted plant beside it. The hallway continues forward."
 
-Position reference:
-- x < 0.35 = left side
-- x 0.35-0.65 = center/ahead
-- x > 0.65 = right side
-- Large bbox area (>0.15) = close
-- Very large area (>0.30) = very close"""
+Example bad output:
+"Person detected. Chair on left. Door visible."
+
+Describe what you SEE in the image provided."""
 
 
 class KeywordsAIClient:
     """
-    Client for Keywords AI API.
+    Client for Keywords AI API with multimodal vision support.
     
     Handles:
-    - LLM calls via Keywords AI proxy
-    - Tool calling for agent actions
+    - Image-based scene understanding with Claude vision
+    - Rich, contextual narration generation
     - Trace logging for transparency
-    
-    Uses Claude Haiku for fast inference (~200-400ms)
     """
     
     def __init__(self):
@@ -152,97 +78,111 @@ class KeywordsAIClient:
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
             },
-            timeout=30.0
+            timeout=60.0  # Increased for vision models
         )
     
     async def close(self):
         """Close the HTTP client."""
         await self.client.aclose()
     
-    def _format_detections(self, objects: List[TrackedObject]) -> str:
-        """Format tracked objects into a prompt-friendly string."""
+    def _format_detections_context(self, objects: List[TrackedObject]) -> str:
+        """Format tracked objects as optional context (not primary input)."""
         if not objects:
-            return "No objects detected."
+            return ""
         
-        lines = []
-        for obj in objects:
-            # Determine position
+        lines = ["Detected objects for context:"]
+        for obj in objects[:10]:  # Limit to top 10
             cx = obj.bbox.center_x
-            if cx < 0.35:
-                position = "left"
-            elif cx > 0.65:
-                position = "right"
-            else:
-                position = "ahead"
-            
-            # Determine distance
+            position = "left" if cx < 0.35 else ("right" if cx > 0.65 else "center")
             area = obj.bbox.area
-            if area > 0.30:
-                distance = "very close"
-            elif area > 0.15:
-                distance = "close"
-            elif area > 0.05:
-                distance = "nearby"
-            else:
-                distance = "distant"
-            
-            # Motion
-            motion = ""
-            if obj.is_approaching:
-                motion = ", approaching"
-            elif abs(obj.velocity_x) > 0.05:
-                motion = ", moving " + ("right" if obj.velocity_x > 0 else "left")
-            
-            lines.append(f"- {obj.label} ({distance}, {position}{motion})")
+            distance = "close" if area > 0.15 else ("nearby" if area > 0.05 else "distant")
+            lines.append(f"- {obj.label}: {distance}, {position}")
         
         return "\n".join(lines)
     
     async def generate_scene_description(
         self,
-        objects: List[TrackedObject],
+        image_base64: str,
+        objects: Optional[List[TrackedObject]] = None,
         ocr_text: Optional[str] = None
     ) -> tuple[str, float, Dict[str, Any]]:
         """
-        Generate a scene description using Claude Haiku via Keywords AI.
+        Generate a rich scene description using multimodal vision.
         
+        Args:
+            image_base64: Base64 encoded image (with or without data URL prefix)
+            objects: Optional list of detected objects for context
+            ocr_text: Optional OCR text found in scene
+            
         Returns:
             Tuple of (description, inference_time_ms, trace)
         """
         start = time.time()
         
-        # Build the user message
-        detection_text = self._format_detections(objects)
-        user_message = f"""Describe the current scene for a blind user based on these detections:
-
-{detection_text}
-"""
+        # Prepare image in OpenAI format (Keywords AI expects OpenAI format)
+        if "," in image_base64:
+            # Already has data URL prefix
+            if not image_base64.startswith("data:"):
+                # Malformed, extract just the base64 part
+                image_base64 = image_base64.split(",")[1]
+                image_url = f"data:image/jpeg;base64,{image_base64}"
+            else:
+                image_url = image_base64
+        else:
+            # Plain base64, add data URL prefix
+            image_url = f"data:image/jpeg;base64,{image_base64}"
+        
+        # Build the user message in OpenAI format
+        # Start with text prompt
+        text_parts = ["Describe this scene for a blind user. Provide rich spatial context and environmental understanding."]
+        
+        # Add detection context if available (but it doesn't dominate)
+        if objects:
+            context = self._format_detections_context(objects)
+            if context:
+                text_parts.append(f"\n\n{context}\n\nUse these detections as supplementary context only. Focus on what you SEE in the image.")
+        
         if ocr_text:
-            user_message += f"\nVisible text: {ocr_text}"
+            text_parts.append(f"\n\nVisible text in scene: {ocr_text}")
         
-        user_message += "\n\nProvide a brief (1-2 sentence) spatial description of what's in view."
+        # OpenAI format: text first, then image
+        user_content = [
+            {
+                "type": "text",
+                "text": "\n".join(text_parts)
+            },
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": image_url
+                }
+            }
+        ]
         
-        # Keywords AI request payload
+        # Keywords AI request payload with Claude Sonnet for vision
         payload = {
-            "model": "claude-3-5-haiku-20241022",
+            "model": "claude-sonnet-4-20250514",  # Use Sonnet for better vision
             "messages": [
-                {"role": "system", "content": AGENT_SYSTEM_PROMPT},
-                {"role": "user", "content": user_message}
+                {"role": "system", "content": SCENE_NARRATOR_PROMPT},
+                {"role": "user", "content": user_content}
             ],
-            "max_tokens": 150,
-            "temperature": 0.3,
+            "max_tokens": 300,
+            "temperature": 0.4,
             # Keywords AI specific fields
             "customer_identifier": "aeye-demo",
             "metadata": {
-                "feature": "scene_description",
-                "object_count": len(objects)
+                "feature": "multimodal_scene_description",
+                "has_objects": objects is not None,
+                "has_ocr": ocr_text is not None
             }
         }
         
         trace = {
             "request": {
                 "model": payload["model"],
-                "object_count": len(objects),
-                "has_ocr": ocr_text is not None
+                "object_count": len(objects) if objects else 0,
+                "has_ocr": ocr_text is not None,
+                "has_image": True
             }
         }
         
@@ -265,7 +205,7 @@ class KeywordsAIClient:
                 "inference_ms": inference_time
             }
             
-            logger.info(f"Scene description generated in {inference_time:.1f}ms")
+            logger.info(f"Multimodal scene description generated in {inference_time:.1f}ms")
             return description.strip(), inference_time, trace
             
         except Exception as e:
@@ -281,131 +221,112 @@ class KeywordsAIClient:
             fallback = self._fallback_description(objects)
             return fallback, inference_time, trace
     
-    async def get_agent_decision(
+    async def generate_text_narration(
         self,
-        objects: List[TrackedObject],
-        context: Dict[str, Any]
-    ) -> tuple[Optional[str], Dict[str, Any]]:
+        image_base64: str,
+        ocr_text: str
+    ) -> tuple[str, float, Dict[str, Any]]:
         """
-        Get agent decision with tool calling.
+        Generate a narration for detected text, using vision to provide context.
         
-        This uses Keywords AI to decide what action to take based on
-        the current detections and context.
-        
+        Args:
+            image_base64: Base64 encoded image
+            ocr_text: Raw OCR text detected
+            
         Returns:
-            Tuple of (action message or None, trace)
+            Tuple of (narration, inference_time_ms, trace)
         """
         start = time.time()
         
-        detection_text = self._format_detections(objects)
+        # Prepare image in OpenAI format
+        if "," in image_base64:
+            if not image_base64.startswith("data:"):
+                image_base64 = image_base64.split(",")[1]
+                image_url = f"data:image/jpeg;base64,{image_base64}"
+            else:
+                image_url = image_base64
+        else:
+            image_url = f"data:image/jpeg;base64,{image_base64}"
         
-        user_message = f"""Current detections:
-{detection_text}
+        text_prompt = f"""The following text was detected in this image:
+"{ocr_text}"
 
-Context:
-- Last alert: {context.get('last_alert_ago', 'never')} seconds ago
-- Mode: {context.get('mode', 'live_assist')}
-
-Decide if an alert is needed. If yes, use speak_alert tool. If no, respond with "No alert needed."
-"""
+Read this text naturally for a blind user. If it's a sign, menu, or label, explain what it says and what it might be (e.g., "This appears to be a menu board listing..." or "This sign says...").
+Keep it natural and informative, as if you're reading aloud to someone."""
         
         payload = {
-            "model": "claude-3-5-haiku-20241022",
+            "model": "claude-sonnet-4-20250514",
             "messages": [
-                {"role": "system", "content": AGENT_SYSTEM_PROMPT},
-                {"role": "user", "content": user_message}
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": text_prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_url
+                            }
+                        }
+                    ]
+                }
             ],
-            "tools": TOOL_SCHEMAS,
-            "tool_choice": "auto",
-            "max_tokens": 100,
-            "temperature": 0.1,
+            "max_tokens": 200,
+            "temperature": 0.3,
             "customer_identifier": "aeye-demo",
-            "metadata": {
-                "feature": "agent_decision",
-                "object_count": len(objects)
-            }
+            "metadata": {"feature": "text_narration"}
         }
         
-        trace = {
-            "request": {
-                "model": payload["model"],
-                "object_count": len(objects),
-                "context": context
-            }
-        }
+        trace = {"request": {"model": payload["model"], "has_image": True}}
         
         try:
-            response = await self.client.post(
-                "/chat/completions",
-                json=payload
-            )
+            response = await self.client.post("/chat/completions", json=payload)
             response.raise_for_status()
-            
             result = response.json()
-            message = result["choices"][0]["message"]
             
+            narration = result["choices"][0]["message"]["content"]
             inference_time = (time.time() - start) * 1000
             
-            trace["response"] = {
-                "success": True,
-                "tokens_used": result.get("usage", {}),
-                "inference_ms": inference_time
-            }
-            
-            # Check for tool calls
-            if "tool_calls" in message and message["tool_calls"]:
-                tool_call = message["tool_calls"][0]
-                function = tool_call["function"]
-                
-                trace["tool_call"] = {
-                    "name": function["name"],
-                    "arguments": function["arguments"]
-                }
-                
-                import json
-                args = json.loads(function["arguments"])
-                
-                if function["name"] == "speak_alert":
-                    return args.get("message"), trace
-                elif function["name"] == "describe_scene":
-                    return args.get("description"), trace
-                elif function["name"] == "give_direction":
-                    direction = args.get("direction", "")
-                    reason = args.get("reason", "")
-                    return f"{direction}. {reason}".strip(), trace
-            
-            # No tool call = no alert needed
-            return None, trace
+            trace["response"] = {"success": True, "inference_ms": inference_time}
+            return narration.strip(), inference_time, trace
             
         except Exception as e:
             inference_time = (time.time() - start) * 1000
-            logger.error(f"Keywords AI error: {e}")
-            trace["response"] = {
-                "success": False,
-                "error": str(e),
-                "inference_ms": inference_time
-            }
-            return None, trace
+            logger.error(f"Text narration error: {e}")
+            trace["response"] = {"success": False, "error": str(e)}
+            
+            # Fallback: just return the raw OCR text
+            return f"The text reads: {ocr_text}", inference_time, trace
     
-    def _fallback_description(self, objects: List[TrackedObject]) -> str:
+    def _fallback_description(self, objects: Optional[List[TrackedObject]]) -> str:
         """Generate a simple fallback description when API fails."""
         if not objects:
-            return "The area appears clear."
+            return "I'm having trouble connecting to the vision service. The area appears to have some activity."
         
-        # Count by type
-        counts = {}
+        # Group by type and position
+        left = []
+        center = []
+        right = []
+        
         for obj in objects:
-            counts[obj.label] = counts.get(obj.label, 0) + 1
-        
-        # Build description
-        parts = []
-        for label, count in counts.items():
-            if count == 1:
-                parts.append(f"one {label}")
+            cx = obj.bbox.center_x
+            if cx < 0.35:
+                left.append(obj.label)
+            elif cx > 0.65:
+                right.append(obj.label)
             else:
-                parts.append(f"{count} {label}s")
+                center.append(obj.label)
         
-        return f"I can see {', '.join(parts)}."
+        parts = []
+        if center:
+            parts.append(f"Ahead: {', '.join(set(center))}")
+        if left:
+            parts.append(f"On your left: {', '.join(set(left))}")
+        if right:
+            parts.append(f"On your right: {', '.join(set(right))}")
+        
+        if parts:
+            return ". ".join(parts) + "."
+        return "The area appears clear."
 
 
 # Singleton instance

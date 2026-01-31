@@ -138,32 +138,52 @@ async def detect_objects(request: DetectionRequest):
 
 
 # ============================================================================
-# OCR Endpoint
+# OCR Endpoint (Enhanced with Vision Context)
 # ============================================================================
 
 @app.post("/ocr", response_model=OCRResponse)
 async def read_text(request: OCRRequest):
     """
-    Extract text from an image using OCR.
+    Extract and narrate text from an image.
     
-    Used for reading signs, labels, menus, etc.
-    Target latency: <500ms
+    Pipeline:
+    1. Run OCR to extract raw text
+    2. Use vision model to contextualize and narrate naturally
+    
+    Target latency: <1500ms
     """
     try:
         ocr = get_ocr_engine()
+        keywords = get_keywords_client()
         
-        text, confidence, inference_time = ocr.read_text_from_base64(
+        start = time.time()
+        
+        # Run OCR
+        raw_text, confidence, ocr_time = ocr.read_text_from_base64(
             request.image_base64
         )
         
-        if not text:
-            text = "No text detected."
-            confidence = 0.0
+        if not raw_text or raw_text.strip() == "":
+            return OCRResponse(
+                text="No text detected in the image.",
+                confidence=0.0,
+                inference_time_ms=(time.time() - start) * 1000
+            )
+        
+        # Use vision model to create natural narration of the text
+        narration, llm_time, trace = await keywords.generate_text_narration(
+            image_base64=request.image_base64,
+            ocr_text=raw_text
+        )
+        
+        total_time = (time.time() - start) * 1000
+        
+        logger.info(f"Text narration in {total_time:.1f}ms (OCR: {ocr_time:.1f}ms, LLM: {llm_time:.1f}ms)")
         
         return OCRResponse(
-            text=text,
+            text=narration,
             confidence=confidence,
-            inference_time_ms=inference_time
+            inference_time_ms=total_time
         )
         
     except Exception as e:
@@ -172,16 +192,20 @@ async def read_text(request: OCRRequest):
 
 
 # ============================================================================
-# Scene Description Endpoint
+# Scene Description Endpoint (Multimodal Vision)
 # ============================================================================
 
 @app.post("/describe", response_model=DescribeResponse)
 async def describe_scene(request: DescribeRequest):
     """
-    Generate a natural language description of the scene.
+    Generate a rich, contextual scene description using multimodal vision.
     
-    Uses object detections + Claude Haiku to create a concise summary.
-    Target latency: <600ms
+    This is the PRIMARY narration endpoint:
+    - Sends actual image to Claude Sonnet vision model
+    - Generates holistic, spatial scene descriptions
+    - Object detections are optional supplementary context
+    
+    Target latency: <2000ms (vision model)
     """
     try:
         detector = get_detector()
@@ -190,26 +214,21 @@ async def describe_scene(request: DescribeRequest):
         
         start = time.time()
         
-        # If no detections provided, run detection first
-        if request.detections is None:
-            detections, _ = detector.detect_from_base64(request.image_base64)
-        else:
-            detections = request.detections
-        
-        # Get timestamp
+        # Run detection for visual overlays (but not for narration)
+        detections, detect_time = detector.detect_from_base64(request.image_base64)
         timestamp = time.time()
-        
-        # Update tracker
         tracked = tracker.update(detections, timestamp)
         
-        # Generate description via Keywords AI
+        # Generate multimodal scene description
         description, llm_time, trace = await keywords.generate_scene_description(
-            tracked
+            image_base64=request.image_base64,
+            objects=tracked,  # Optional context
+            ocr_text=None
         )
         
         total_time = (time.time() - start) * 1000
         
-        logger.info(f"Scene description generated in {total_time:.1f}ms")
+        logger.info(f"Multimodal scene description in {total_time:.1f}ms (detect: {detect_time:.1f}ms, llm: {llm_time:.1f}ms)")
         
         return DescribeResponse(
             description=description,
@@ -268,26 +287,24 @@ async def reset_agent():
 
 
 # ============================================================================
-# Combined Pipeline Endpoint (optimized for frontend)
+# Combined Pipeline Endpoint (for detection + overlays only)
 # ============================================================================
 
 @app.post("/pipeline")
 async def run_pipeline(request: DetectionRequest):
     """
-    Run the full detection + agent pipeline in one call.
+    Run object detection for visual overlays.
     
-    This is the optimized endpoint for the frontend loop:
-    1. Decode image
-    2. Run object detection
-    3. Update tracking
-    4. Run agent reasoning
-    5. Return detections + agent decision
+    This endpoint is for UI/debug purposes only:
+    - Returns bounding boxes for visual rendering
+    - Does NOT generate spoken narration
+    - Used in parallel with /live for visual feedback
     
-    Target latency: <300ms
+    Target latency: <200ms
     """
     try:
         detector = get_detector()
-        agent = get_agent()
+        tracker = get_tracker()
         
         start = time.time()
         
@@ -296,19 +313,21 @@ async def run_pipeline(request: DetectionRequest):
             request.image_base64
         )
         
-        # Run agent step
-        agent_request = AgentStepRequest(
-            timestamp=request.timestamp,
-            detections=detections
-        )
-        agent_response = agent.step(agent_request)
+        # Update tracker for persistent IDs
+        tracked = tracker.update(detections, request.timestamp)
+        
+        # Update detections with track IDs
+        for det in detections:
+            for t in tracked:
+                if t.label == det.label and abs(t.bbox.x1 - det.bbox.x1) < 0.1:
+                    det.track_id = t.id
+                    break
         
         total_time = (time.time() - start) * 1000
         
         return {
             "timestamp": request.timestamp,
             "detections": [d.model_dump() for d in detections],
-            "agent": agent_response.model_dump(),
             "timing": {
                 "detection_ms": detect_time,
                 "total_ms": total_time
@@ -317,4 +336,67 @@ async def run_pipeline(request: DetectionRequest):
         
     except Exception as e:
         logger.error(f"Pipeline error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# Live Assist Endpoint (Blocking Narrative Mode)
+# ============================================================================
+
+@app.post("/live")
+async def live_assist(request: DescribeRequest):
+    """
+    Live Assist mode - generates a complete scene narrative.
+    
+    This is the PRIMARY endpoint for live mode:
+    1. Captures full frame
+    2. Runs multimodal scene understanding
+    3. Returns complete narrative for speech
+    4. Frontend should speak to completion before next request
+    
+    Key behaviors:
+    - Blocking: Frontend waits for this to complete
+    - Non-interrupting: Frontend speaks entire response
+    - Narrative-only: No alerts, just scene description
+    - Rich context: Environmental understanding, not object lists
+    
+    Target latency: <2500ms
+    """
+    try:
+        detector = get_detector()
+        tracker = get_tracker()
+        keywords = get_keywords_client()
+        
+        start = time.time()
+        
+        # Run detection for context (not for narration)
+        detections, detect_time = detector.detect_from_base64(request.image_base64)
+        timestamp = time.time()
+        tracked = tracker.update(detections, timestamp)
+        
+        # Generate multimodal scene description
+        description, llm_time, trace = await keywords.generate_scene_description(
+            image_base64=request.image_base64,
+            objects=tracked,
+            ocr_text=None
+        )
+        
+        total_time = (time.time() - start) * 1000
+        
+        logger.info(f"Live assist narrative in {total_time:.1f}ms")
+        
+        return {
+            "timestamp": timestamp,
+            "narrative": description,
+            "detections": [d.model_dump() for d in detections],
+            "timing": {
+                "detection_ms": detect_time,
+                "llm_ms": llm_time,
+                "total_ms": total_time
+            },
+            "trace": trace
+        }
+        
+    except Exception as e:
+        logger.error(f"Live assist error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

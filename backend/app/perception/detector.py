@@ -20,23 +20,123 @@ from app.models import Detection, BoundingBox
 logger = logging.getLogger(__name__)
 
 
-# Target classes for assistive vision (COCO class IDs)
+# Expanded target classes for rich visual overlays (COCO class IDs)
+# Covers furniture, fixtures, personal items, appliances, and more
 TARGET_CLASSES = {
+    # People and animals
     0: "person",
-    1: "bicycle",  # maps to "bike"
-    2: "car",
+    15: "cat",
     16: "dog",
+    17: "horse",
+    
+    # Vehicles (outdoor context)
+    1: "bicycle",
+    2: "car",
+    3: "motorcycle",
+    5: "bus",
+    7: "truck",
+    
+    # Furniture
     56: "chair",
-    # Note: COCO doesn't have door/stairs - we'll use custom mapping
+    57: "couch",
+    58: "potted plant",
+    59: "bed",
+    60: "dining table",
+    61: "toilet",
+    
+    # Electronics and appliances
+    62: "tv",
+    63: "laptop",
+    64: "mouse",
+    65: "remote",
+    66: "keyboard",
+    67: "cell phone",
+    68: "microwave",
+    69: "oven",
+    70: "toaster",
+    71: "sink",
+    72: "refrigerator",
+    
+    # Personal items
+    24: "backpack",
+    25: "umbrella",
+    26: "handbag",
+    27: "tie",
+    28: "suitcase",
+    
+    # Indoor objects
+    73: "book",
+    74: "clock",
+    75: "vase",
+    76: "scissors",
+    77: "teddy bear",
+    
+    # Food and dining
+    39: "bottle",
+    40: "wine glass",
+    41: "cup",
+    42: "fork",
+    43: "knife",
+    44: "spoon",
+    45: "bowl",
+    
+    # Sports equipment (often in gyms, parks)
+    32: "sports ball",
+    33: "kite",
+    34: "baseball bat",
+    35: "baseball glove",
+    36: "skateboard",
+    37: "surfboard",
+    38: "tennis racket",
+    
+    # Traffic and outdoor
+    9: "traffic light",
+    10: "fire hydrant",
+    11: "stop sign",
+    12: "parking meter",
+    13: "bench",
 }
 
-# Friendly label mapping
+# Friendly label mapping for TTS
 LABEL_MAP = {
     "bicycle": "bike",
     "person": "person",
     "car": "car",
     "dog": "dog",
+    "cat": "cat",
     "chair": "chair",
+    "couch": "couch",
+    "potted plant": "plant",
+    "bed": "bed",
+    "dining table": "table",
+    "toilet": "toilet",
+    "tv": "television",
+    "laptop": "laptop",
+    "cell phone": "phone",
+    "microwave": "microwave",
+    "oven": "oven",
+    "refrigerator": "refrigerator",
+    "backpack": "backpack",
+    "handbag": "bag",
+    "suitcase": "suitcase",
+    "umbrella": "umbrella",
+    "bottle": "bottle",
+    "cup": "cup",
+    "bowl": "bowl",
+    "book": "book",
+    "clock": "clock",
+    "traffic light": "traffic light",
+    "stop sign": "stop sign",
+    "bench": "bench",
+    "sports ball": "ball",
+    "skateboard": "skateboard",
+    "motorcycle": "motorcycle",
+    "bus": "bus",
+    "truck": "truck",
+    "horse": "horse",
+    "fire hydrant": "fire hydrant",
+    "parking meter": "parking meter",
+    "sink": "sink",
 }
 
 
@@ -107,12 +207,12 @@ class ObjectDetector:
         
         start = time.time()
         
-        # Run inference
+        # Run inference - detect ALL COCO classes for rich visual overlays
         results = self.model.predict(
             image,
             conf=conf,
             verbose=False,
-            classes=list(TARGET_CLASSES.keys())  # Filter to target classes only
+            # No class filter - detect all objects for rich overlays
         )
         
         inference_time = (time.time() - start) * 1000
@@ -141,7 +241,8 @@ class ObjectDetector:
                     )
                     
                     # Get label with friendly mapping
-                    raw_label = TARGET_CLASSES.get(cls_id, f"class_{cls_id}")
+                    # Use COCO class name, then map to friendly name
+                    raw_label = self.model.names.get(cls_id, f"object_{cls_id}")
                     label = LABEL_MAP.get(raw_label, raw_label)
                     
                     detections.append(Detection(

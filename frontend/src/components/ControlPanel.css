@@ -1,0 +1,158 @@
+/**
+ * ControlPanel Styles
+ */
+
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  background: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.control-group-title {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Mode Buttons */
+.mode-buttons {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.mode-button {
+  flex: 1;
+  padding: var(--spacing-sm);
+  background: var(--color-surface-elevated);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-button:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.mode-button.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.mode-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mode-button:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Live Status */
+.live-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-sm);
+  background: var(--color-surface-elevated);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.status-indicator .processing {
+  color: var(--color-primary);
+}
+
+.status-indicator .speaking {
+  color: var(--color-success);
+}
+
+.status-indicator .ready {
+  color: var(--color-text-muted);
+}
+
+/* Settings */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.setting-row label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+/* Slider */
+.slider {
+  flex: 1;
+  height: 8px;
+  appearance: none;
+  background: var(--color-border);
+  border-radius: 4px;
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* Toggle Button */
+.toggle-button {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-button.on {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: white;
+}
+
+.toggle-button.off {
+  background: var(--color-surface-elevated);
+  color: var(--color-text-muted);
+}
