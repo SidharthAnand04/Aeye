@@ -1,36 +1,35 @@
-# Aeye — Camera-based assistive system
+# Aeye — Real-time Assistive Vision for Blind & Low-Vision Users
 
-Camera-based assistive system for blind and low-vision users. Converts a live video feed into short, prioritized audio cues plus on-demand OCR and scene descriptions. Includes a judge-facing UI and an agent trace for explainability.
+Camera-based AI assistant that detects obstacles, reads text, and describes scenes—all in real time with spoken feedback.
 
-## Table of contents
+## MVP Features
 
-- Demo goals
-- Features
-- Architecture
-- Data interfaces
-- Agent design
-- Modes & UI
-- Suggested endpoints
-- Build plan
-- Demo script
-- Safety & privacy
-- Tech stack
-- Success metrics
+### 1. Real-time object detection
+- Detect: person, car, bike, dog, chair, doors, stairs
+- Shows bounding boxes in UI (for judges)
+- Speaks key detections for accessibility
+- Updates continuously (1–5 FPS)
 
-## Demo goals
+### 2. Smart audio notifications
+- **Priority rules**: moving obstacles near center > static clutter > background
+- **Cooldowns**: don't repeat "person" every frame
+- **Novelty triggers**: only speak when something changes (new object / gets close / enters path)
+- Result: fewer false alerts, more useful warnings
 
-- Real-time detection with concise, non-spammy audio
-- On-demand: Read Text (OCR) and Describe Scene
-- Optional: Find mode (directions to a target)
-- Transparent agent decisions with a trace panel for judges
+### 3. On-demand "Describe scene"
+- User presses button or voice command
+- Returns short summary: *"Two people ahead. Door on the right. Chair in the middle."*
+- Speaks result immediately
 
-## Features
+### 4. Text reading mode (OCR)
+- User taps "Read text" → capture frame → OCR → speak
+- Handles labels, signs, menus
+- Quick and demoable
 
-- Live Assist: prioritized, directional alerts (left/center/right)
-- Read Text: capture frame → OCR → speak short readable text
-- Describe Scene: capture frame → 1–2 sentence summary → speak
-- Voice Booster (optional): hold-to-talk, STT → louder TTS
-- Judge UI: live feed, bounding boxes, speech log, trace panel
+### 5. Voice booster
+- Press-and-hold to talk
+- Speech-to-text → re-speak with louder TTS
+- Quick phrase buttons: *"Excuse me"*, *"Can you help me find…"*, *"I can't see well."*
 
 ## Architecture
 
