@@ -4,62 +4,90 @@
  * Supports both local webcam and IP Webcam (phone camera over network)
  */
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 
-const API_BASE = process.env.REACT_APP_API_URL || '';
+// Local storage key for saving IP address
+const IP_WEBCAM_STORAGE_KEY = 'aeye_ip_webcam_address';
 
 export function useCamera() {
   const videoRef = useRef(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
   const [cameraSource, setCameraSource] = useState('local'); // 'local' or 'ip-webcam'
-  const [ipWebcamConfig, setIpWebcamConfig] = useState(null);
+  const [ipWebcamAddress, setIpWebcamAddress] = useState('');
   
-  // Fetch IP Webcam config from backend
-  const fetchIpWebcamConfig = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/config/ip-webcam`);
-      if (response.ok) {
-        const config = await response.json();
-        setIpWebcamConfig(config);
-        return config;
-      }
-    } catch (err) {
-      console.error('Failed to fetch IP Webcam config:', err);
+  // Load saved IP address from localStorage on mount
+  useEffect(() => {
+    const savedAddress = localStorage.getItem(IP_WEBCAM_STORAGE_KEY);
+    if (savedAddress) {
+      setIpWebcamAddress(savedAddress);
     }
-    return null;
   }, []);
   
-  const startCamera = useCallback(async (source = 'local') => {
+  // Save IP address to localStorage when it changes
+  const updateIpWebcamAddress = useCallback((address) => {
+    setIpWebcamAddress(address);
+    if (address) {
+      localStorage.setItem(IP_WEBCAM_STORAGE_KEY, address);
+    } else {
+      localStorage.removeItem(IP_WEBCAM_STORAGE_KEY);
+    }
+  }, []);
+  
+  // Build IP Webcam URLs from address
+  const getIpWebcamUrls = useCallback((address) => {
+    if (!address) return null;
+    
+    // Ensure address has http:// prefix
+    let baseUrl = address.trim();
+    if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = `http://${baseUrl}`;
+    }
+    
+    // Remove trailing slash if present
+    baseUrl = baseUrl.replace(/\/$/, '');
+    
+    return {
+      video_url: `${baseUrl}/video`,
+      shot_url: `${baseUrl}/shot.jpg`,
+    };
+  }, []);
+  
+  const startCamera = useCallback(async (source = 'local', customIpAddress = null) => {
     try {
       setError(null);
       setCameraSource(source);
       
       if (source === 'ip-webcam') {
-        // Use IP Webcam stream
-        let config = ipWebcamConfig;
-        if (!config) {
-          config = await fetchIpWebcamConfig();
+        // Use provided address or saved address
+        const address = customIpAddress || ipWebcamAddress;
+        
+        if (!address) {
+          throw new Error('Please enter IP Webcam address (e.g., 192.168.1.100:8080)');
         }
         
-        if (!config || !config.enabled) {
-          throw new Error('IP Webcam not configured. Please set IP_WEBCAM_URL in backend .env file.');
-        }
+        const urls = getIpWebcamUrls(address);
         
         if (videoRef.current) {
           // IP Webcam provides MJPEG stream at /video endpoint
-          videoRef.current.src = config.video_url;
+          videoRef.current.src = urls.video_url;
           videoRef.current.crossOrigin = 'anonymous';
           
           await new Promise((resolve, reject) => {
+            const timeoutId = setTimeout(() => {
+              reject(new Error('IP Webcam connection timeout. Check IP address and ensure phone app is running.'));
+            }, 10000);
+            
             videoRef.current.onloadedmetadata = () => {
+              clearTimeout(timeoutId);
               videoRef.current.play()
                 .then(resolve)
                 .catch(reject);
             };
-            videoRef.current.onerror = () => reject(new Error('Failed to load IP Webcam stream'));
-            // Timeout after 10 seconds
-            setTimeout(() => reject(new Error('IP Webcam connection timeout')), 10000);
+            videoRef.current.onerror = () => {
+              clearTimeout(timeoutId);
+              reject(new Error('Failed to connect to IP Webcam. Check IP address and network.'));
+            };
           });
           
           setIsStreaming(true);
@@ -88,7 +116,7 @@ export function useCamera() {
       setError(err.message || 'Failed to access camera');
       setIsStreaming(false);
     }
-  }, [ipWebcamConfig, fetchIpWebcamConfig]);
+  }, [ipWebcamAddress, getIpWebcamUrls]);
   
   const stopCamera = useCallback(() => {
     if (videoRef.current) {
@@ -126,10 +154,10 @@ export function useCamera() {
     isStreaming,
     error,
     cameraSource,
-    ipWebcamConfig,
+    ipWebcamAddress,
+    setIpWebcamAddress: updateIpWebcamAddress,
     startCamera,
     stopCamera,
-    captureFrame,
-    fetchIpWebcamConfig
+    captureFrame
   };
 }

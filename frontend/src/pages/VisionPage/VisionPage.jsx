@@ -68,17 +68,12 @@ const VisionPage = () => {
     isStreaming, 
     error: cameraError, 
     cameraSource,
-    ipWebcamConfig,
+    ipWebcamAddress,
+    setIpWebcamAddress,
     startCamera, 
     stopCamera,
-    captureFrame,
-    fetchIpWebcamConfig
+    captureFrame
   } = useCamera();
-  
-  // Fetch IP Webcam config on mount
-  useEffect(() => {
-    fetchIpWebcamConfig();
-  }, [fetchIpWebcamConfig]);
   
   const {
     detections,
@@ -428,18 +423,33 @@ const VisionPage = () => {
                         { 
                           value: 'ip-webcam', 
                           label: 'Phone', 
-                          icon: <Smartphone size={14} />,
-                          disabled: !ipWebcamConfig?.enabled
+                          icon: <Smartphone size={14} />
                         }
                       ]}
                       value={selectedCameraSource}
                       onChange={setSelectedCameraSource}
                       disabled={isStreaming}
                     />
-                    {selectedCameraSource === 'ip-webcam' && !ipWebcamConfig?.enabled && (
-                      <p className="camera-hint">Set IP_WEBCAM_URL in backend .env</p>
-                    )}
                   </div>
+                  
+                  {/* IP Webcam Address Input */}
+                  {selectedCameraSource === 'ip-webcam' && (
+                    <div className="ip-webcam-input">
+                      <label className="ip-label">IP Webcam Address</label>
+                      <input
+                        type="text"
+                        className="ip-input"
+                        placeholder="192.168.1.100:8080"
+                        value={ipWebcamAddress}
+                        onChange={(e) => setIpWebcamAddress(e.target.value)}
+                        disabled={isStreaming}
+                      />
+                      <p className="ip-hint">
+                        Open IP Webcam app on phone → Start server → Enter IP shown
+                      </p>
+                    </div>
+                  )}
+                  
                   <div className="control-actions" style={{ marginTop: 'var(--space-2)' }}>
                     {!isStreaming ? (
                       <Button
@@ -447,6 +457,7 @@ const VisionPage = () => {
                         onClick={handleStartCamera}
                         icon={selectedCameraSource === 'ip-webcam' ? <Smartphone /> : <Camera />}
                         fullWidth
+                        disabled={selectedCameraSource === 'ip-webcam' && !ipWebcamAddress}
                       >
                         {selectedCameraSource === 'ip-webcam' ? 'Connect Phone' : 'Start Camera'}
                       </Button>
