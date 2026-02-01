@@ -11,6 +11,9 @@ const IP_WEBCAM_STORAGE_KEY = 'aeye_ip_webcam_address';
 
 export function useCamera() {
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const ipImageRef = useRef(null);
+  const ipIntervalRef = useRef(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
   const [cameraSource, setCameraSource] = useState('local'); // 'local' or 'ip-webcam'
@@ -68,28 +71,83 @@ export function useCamera() {
         
         const urls = getIpWebcamUrls(address);
         
+        // For IP Webcam, we fetch individual frames using shot.jpg endpoint
+        // This avoids CORS/MJPEG issues with the video element
+        
+        // Create a hidden canvas and image for frame capture
+        if (!canvasRef.current) {
+          canvasRef.current = document.createElement('canvas');
+        }
+        if (!ipImageRef.current) {
+          ipImageRef.current = new Image();
+          ipImageRef.current.crossOrigin = 'anonymous';
+        }
+        
+        // Test the connection first
+        const testUrl = `${urls.shot_url}?t=${Date.now()}`;
+        
+        await new Promise((resolve, reject) => {
+          const testImg = new Image();
+          testImg.crossOrigin = 'anonymous';
+          
+          const timeoutId = setTimeout(() => {
+            reject(new Error('IP Webcam connection timeout. Check IP address and ensure phone app is running.'));
+          }, 10000);
+          
+          testImg.onload = () => {
+            clearTimeout(timeoutId);
+            resolve();
+          };
+          
+          testImg.onerror = () => {
+            clearTimeout(timeoutId);
+            reject(new Error('Failed to connect to IP Webcam. Check IP address and network.'));
+          };
+          
+          testImg.src = testUrl;
+        });
+        
+        // Connection successful - start streaming frames to video element
         if (videoRef.current) {
-          // IP Webcam provides MJPEG stream at /video endpoint
-          videoRef.current.src = urls.video_url;
-          videoRef.current.crossOrigin = 'anonymous';
-          
-          await new Promise((resolve, reject) => {
-            const timeoutId = setTimeout(() => {
-              reject(new Error('IP Webcam connection timeout. Check IP address and ensure phone app is running.'));
-            }, 10000);
+          // Use the MJPEG video stream directly in an img tag drawn to canvas
+          const startStreaming = () => {
+            const img = ipImageRef.current;
+            const canvas = canvasRef.current;
+            const video = videoRef.current;
             
-            videoRef.current.onloadedmetadata = () => {
-              clearTimeout(timeoutId);
-              videoRef.current.play()
-                .then(resolve)
-                .catch(reject);
+            // Fetch and display frames
+            const fetchFrame = () => {
+              if (!ipIntervalRef.current) return;
+              
+              const frameImg = new Image();
+              frameImg.crossOrigin = 'anonymous';
+              
+              frameImg.onload = () => {
+                // Set canvas size to match image
+                canvas.width = frameImg.width;
+                canvas.height = frameImg.height;
+                
+                // Draw to canvas
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(frameImg, 0, 0);
+                
+                // Create video-compatible stream from canvas
+                if (!video.srcObject) {
+                  const stream = canvas.captureStream(30);
+                  video.srcObject = stream;
+                  video.play().catch(console.error);
+                }
+              };
+              
+              frameImg.src = `${urls.shot_url}?t=${Date.now()}`;
             };
-            videoRef.current.onerror = () => {
-              clearTimeout(timeoutId);
-              reject(new Error('Failed to connect to IP Webcam. Check IP address and network.'));
-            };
-          });
+            
+            // Fetch frames at ~15 FPS
+            ipIntervalRef.current = setInterval(fetchFrame, 66);
+            fetchFrame(); // Start immediately
+          };
           
+          startStreaming();
           setIsStreaming(true);
         }
       } else {
@@ -119,18 +177,21 @@ export function useCamera() {
   }, [ipWebcamAddress, getIpWebcamUrls]);
   
   const stopCamera = useCallback(() => {
+    // Clear IP webcam interval
+    if (ipIntervalRef.current) {
+      clearInterval(ipIntervalRef.current);
+      ipIntervalRef.current = null;
+    }
+    
     if (videoRef.current) {
-      if (cameraSource === 'local' && videoRef.current.srcObject) {
+      if (videoRef.current.srcObject) {
         const tracks = videoRef.current.srcObject.getTracks();
         tracks.forEach(track => track.stop());
         videoRef.current.srcObject = null;
-      } else {
-        // IP Webcam - just clear the src
-        videoRef.current.src = '';
       }
     }
     setIsStreaming(false);
-  }, [cameraSource]);
+  }, []);
   
   const captureFrame = useCallback(() => {
     if (!videoRef.current || !isStreaming) {
@@ -148,6 +209,15 @@ export function useCamera() {
     // Return as base64 JPEG (smaller than PNG)
     return canvas.toDataURL('image/jpeg', 0.8);
   }, [isStreaming]);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (ipIntervalRef.current) {
+        clearInterval(ipIntervalRef.current);
+      }
+    };
+  }, []);
   
   return {
     videoRef,
