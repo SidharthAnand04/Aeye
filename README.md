@@ -4,6 +4,16 @@ Camera-based AI assistant that detects obstacles, reads text, and describes scen
 
 > 🏆 Built for Keywords AI Hackathon 2026
 
+## Demo
+
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=FT2MSTotdO0" target="_blank">
+    <img src="https://img.youtube.com/vi/FT2MSTotdO0/maxresdefault.jpg" alt="Aeye Demo Video" width="560">
+  </a>
+</div>
+
+---
+
 ## Quick Start
 
 ### Prerequisites
