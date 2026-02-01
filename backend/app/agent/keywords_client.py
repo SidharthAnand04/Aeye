@@ -207,7 +207,7 @@ class KeywordsAIClient:
         
         # Keywords AI request payload with Claude Haiku for fast vision
         payload = {
-            "model": "anthropic/claude-3-haiku-20240307",  # Use Haiku for faster responses
+            "model": "anthropic/claude-sonnet-4-5-20250929",  # Use Haiku for faster responses
             "messages": [
                 {"role": "system", "content": SCENE_NARRATOR_PROMPT},
                 {"role": "user", "content": user_content}
