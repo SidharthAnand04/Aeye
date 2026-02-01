@@ -6,6 +6,11 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-drawer);
+  pointer-events: none;
+}
+
+.drawer-portal .drawer {
+  pointer-events: auto;
 }
 
 .drawer-backdrop {
@@ -13,6 +18,7 @@
   inset: 0;
   background-color: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(2px);
+  pointer-events: auto;
 }
 
 .drawer {
