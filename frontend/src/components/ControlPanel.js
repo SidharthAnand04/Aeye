@@ -1,24 +1,27 @@
 /**
  * ControlPanel Component
- * Main control buttons for the assistive vision app.
+ * Essential controls for autonomous assistive vision.
  * 
- * Updated for blocking live mode:
- * - Live mode shows speaking status
- * - Removed FPS slider (blocking mode is self-pacing)
+ * Shown controls:
+ * - Camera start/stop
+ * - Assist start/stop (no mode selection, fully automatic)
+ * - Mute toggle
+ * - Settings
+ * 
+ * Removed:
+ * - Mode selection buttons (automatic)
+ * - Quick phrases (generated dynamically)
+ * - Manual actions (all automatic)
  */
 
 import React from 'react';
 import './ControlPanel.css';
 
 function ControlPanel({
-  mode,
-  setMode,
   isLiveRunning,
   isStreaming,
   onStartLive,
   onStopLive,
-  onReadText,
-  onDescribe,
   onStartCamera,
   onStopCamera,
   muted,
@@ -51,43 +54,12 @@ function ControlPanel({
         )}
       </div>
       
-      {/* Mode Selection */}
+      {/* Assist Control */}
       <div className="control-group">
-        <h3 className="control-group-title">Mode</h3>
-        <div className="mode-buttons">
-          <button
-            className={`mode-button ${mode === 'live_assist' ? 'active' : ''}`}
-            onClick={() => setMode('live_assist')}
-            aria-pressed={mode === 'live_assist'}
-            disabled={isLiveRunning}
-          >
-            🔴 Live Assist
-          </button>
-          <button
-            className={`mode-button ${mode === 'read_text' ? 'active' : ''}`}
-            onClick={() => setMode('read_text')}
-            aria-pressed={mode === 'read_text'}
-            disabled={isLiveRunning}
-          >
-            📖 Read Text
-          </button>
-          <button
-            className={`mode-button ${mode === 'describe' ? 'active' : ''}`}
-            onClick={() => setMode('describe')}
-            aria-pressed={mode === 'describe'}
-            disabled={isLiveRunning}
-          >
-            💬 Describe
-          </button>
-        </div>
-      </div>
-      
-      {/* Primary Actions */}
-      <div className="control-group">
-        <h3 className="control-group-title">Actions</h3>
+        <h3 className="control-group-title">Assist</h3>
         
-        {/* Live Assist Control */}
-        {mode === 'live_assist' && (
+        {/* Automatic Assist (always-on when enabled) */}
+        {
           !isLiveRunning ? (
             <button
               className="btn btn-primary btn-large"
@@ -117,31 +89,7 @@ function ControlPanel({
               </div>
             </div>
           )
-        )}
-        
-        {/* Read Text */}
-        {mode === 'read_text' && (
-          <button
-            className="btn btn-secondary btn-large"
-            onClick={onReadText}
-            disabled={!isStreaming || isProcessing || isSpeaking}
-            aria-label="Read text from camera"
-          >
-            {isProcessing ? '⏳ Reading...' : isSpeaking ? '🔊 Speaking...' : '📖 Read Text'}
-          </button>
-        )}
-        
-        {/* Describe Scene */}
-        {mode === 'describe' && (
-          <button
-            className="btn btn-secondary btn-large"
-            onClick={onDescribe}
-            disabled={!isStreaming || isProcessing || isSpeaking}
-            aria-label="Describe current scene"
-          >
-            {isProcessing ? '⏳ Describing...' : isSpeaking ? '🔊 Speaking...' : '💬 Describe Scene'}
-          </button>
-        )}
+        }
       </div>
       
       {/* Settings */}

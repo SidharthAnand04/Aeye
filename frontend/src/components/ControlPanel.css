@@ -26,45 +26,6 @@
   letter-spacing: 0.05em;
 }
 
-/* Mode Buttons */
-.mode-buttons {
-  display: flex;
-  gap: var(--spacing-xs);
-}
-
-.mode-button {
-  flex: 1;
-  padding: var(--spacing-sm);
-  background: var(--color-surface-elevated);
-  border: 2px solid var(--color-border);
-  border-radius: var(--border-radius);
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mode-button:hover:not(:disabled) {
-  border-color: var(--color-primary);
-}
-
-.mode-button.active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: white;
-}
-
-.mode-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.mode-button:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
 /* Live Status */
 .live-status {
   display: flex;

@@ -41,11 +41,30 @@ class BoundingBox(BaseModel):
 
 
 class Detection(BaseModel):
-    """Single object detection result."""
+    """
+    Single object detection result with spatial and distance information.
+    
+    Core fields:
+    - label: Object class name
+    - confidence: Model confidence [0, 1]
+    - bbox: Normalized bounding box [0, 1]
+    
+    Spatial fields (added by detector):
+    - zone: "left" | "center" | "right" (for TTS navigation)
+    - distance_bucket: "near" | "mid" | "far" (quantized for natural language)
+    - distance_est_m: Estimated distance in meters
+    - distance_score: [0, 1], confidence in distance estimate (1=near, 0=far)
+    """
     label: str
     confidence: float = Field(..., ge=0.0, le=1.0)
     bbox: BoundingBox
     track_id: Optional[int] = None
+    
+    # Spatial awareness (added by detector)
+    zone: Optional[Literal["left", "center", "right"]] = None
+    distance_bucket: Optional[Literal["near", "mid", "far"]] = None
+    distance_est_m: Optional[float] = None
+    distance_score: Optional[float] = None
 
 
 class DetectionRequest(BaseModel):

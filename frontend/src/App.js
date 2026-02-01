@@ -1,12 +1,13 @@
 /**
  * Aeye - Real-time Assistive Vision Application
- * Main App component with camera streaming, detection overlay, and accessible controls.
+ * Autonomous assistive vision with automatic context-aware decision making.
  * 
- * Key design changes:
- * - Live mode is BLOCKING: capture → describe → speak to completion → repeat
- * - No alert-based speech, only rich narrative descriptions
- * - Detection runs separately for visual overlays only
- * - Speech never interrupted mid-sentence
+ * Design principles:
+ * - One continuous assistant (never pauses for mode selection)
+ * - All modes inferred automatically from context (internal only)
+ * - Spoken output is generated dynamically from real-time analysis
+ * - No manual buttons, quick phrases, or mode selection exposed to user
+ * - Focus: blind user safety and daily autonomy
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
@@ -24,16 +25,9 @@ import { useCamera } from './hooks/useCamera';
 import { useDetection } from './hooks/useDetection';
 import { useSpeech } from './hooks/useSpeech';
 
-// Constants
-const MODES = {
-  LIVE_ASSIST: 'live_assist',
-  READ_TEXT: 'read_text',
-  DESCRIBE: 'describe',
-};
-
 function App() {
   // State
-  const [mode, setMode] = useState(MODES.LIVE_ASSIST);
+  // Note: mode is managed internally by backend, never exposed to user
   const [isLiveRunning, setIsLiveRunning] = useState(false);
   const [showTrace, setShowTrace] = useState(true);
   const [muted, setMuted] = useState(false);
@@ -138,40 +132,6 @@ function App() {
     stopSpeech();  // Stop any ongoing speech
   }, [stopSpeech]);
   
-  // Handle mode-specific actions (on-demand, not live)
-  const handleReadText = useCallback(async () => {
-    const frame = captureFrame();
-    if (frame) {
-      const text = await readText(frame);
-      if (text && !muted) {
-        speak(text);
-      }
-    }
-  }, [captureFrame, readText, speak, muted]);
-  
-  const handleDescribe = useCallback(async () => {
-    const frame = captureFrame();
-    if (frame) {
-      const description = await describeScene(frame);
-      if (description && !muted) {
-        speak(description);
-      }
-    }
-  }, [captureFrame, describeScene, speak, muted]);
-  
-  // Quick phrases for voice booster
-  const quickPhrases = [
-    "Excuse me",
-    "Can you help me?",
-    "I can't see well",
-    "Where is the exit?",
-    "Thank you"
-  ];
-  
-  const handleQuickPhrase = useCallback((phrase) => {
-    speak(phrase, { rate: 1.0, volume: 1.0 });
-  }, [speak]);
-  
   // Separate detection loop for visual overlays (runs independently)
   const detectionIntervalRef = useRef(null);
   
@@ -246,14 +206,10 @@ function App() {
         {/* Control panel */}
         <div className="controls-section">
           <ControlPanel
-            mode={mode}
-            setMode={setMode}
             isLiveRunning={isLiveRunning}
             isStreaming={isStreaming}
             onStartLive={handleStartLive}
             onStopLive={handleStopLive}
-            onReadText={handleReadText}
-            onDescribe={handleDescribe}
             onStartCamera={startCamera}
             onStopCamera={stopCamera}
             muted={muted}
@@ -261,23 +217,6 @@ function App() {
             isProcessing={isProcessing}
             isSpeaking={isSpeaking}
           />
-          
-          {/* Quick phrases */}
-          <div className="quick-phrases">
-            <h3>Quick Phrases</h3>
-            <div className="phrase-buttons">
-              {quickPhrases.map((phrase, index) => (
-                <button
-                  key={index}
-                  className="phrase-button"
-                  onClick={() => handleQuickPhrase(phrase)}
-                  aria-label={`Speak: ${phrase}`}
-                >
-                  {phrase}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
         
         {/* Side panel for judges */}
