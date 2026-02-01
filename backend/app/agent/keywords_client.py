@@ -47,13 +47,13 @@ LOCATION CONTEXT MATTERS:
 ✗ BAD: "Sunny weather" (not navigation-relevant)
 
 ** INSIDE/BUILDING **
-- Primary: Useful locations (bathroom, exit, stairs, doors)
-- Secondary: Obstacles, furniture, handrails
+- Primary: Clear directions to take.
+- Secondary: Useful locations (bathroom, exit, stairs, doors). Obstacles, furniture, handrails
 - Format: "[LOCATION/OBJECT] [DIRECTION]. [HOW TO ACCESS]"
 ✓ GOOD: "Bathroom door left. Handle up." (5 words)
 ✓ GOOD: "Stairs down. Rail on right." (5 words)
 ✓ GOOD: "Exit sign ahead. Push door." (5 words)
-✓ GOOD: "Clear path forward. Continue safe." (5 words)
+✓ GOOD: "Clear path forward. Continue straight safe." (6 words)
 ✗ BAD: "Multiple chairs and tables" (generic description)
 ✗ BAD: "The room has warm lighting" (not actionable)
 
