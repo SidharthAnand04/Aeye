@@ -1,12 +1,26 @@
 /**
- * Vision Page Styles
+ * Vision Page Styles - Dark Theme
  */
 
 .vision-page {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-bg-subtle);
+  background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-subtle) 50%, var(--color-bg) 100%);
+  position: relative;
+}
+
+/* Subtle gradient glow */
+.vision-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 400px;
+  background: radial-gradient(ellipse at center top, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 .vision-container {
@@ -18,6 +32,7 @@
   width: 100%;
   padding: var(--space-6);
   gap: var(--space-6);
+  z-index: 1;
 }
 
 /* Main Content */
@@ -40,10 +55,11 @@
   width: 100%;
   height: 100%;
   min-height: 400px;
-  background-color: var(--color-gray-900);
+  background: linear-gradient(135deg, #0a0a0b 0%, #1a1a1f 100%);
   border-radius: var(--radius-2xl);
   overflow: hidden;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-2xl), 0 0 60px rgba(59, 130, 246, 0.1);
+  border: 1px solid var(--color-border);
 }
 
 .camera-video {

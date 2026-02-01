@@ -48,16 +48,16 @@
   font-size: var(--text-lg);
 }
 
-/* Variants */
+/* Variants - Dark Theme */
 .btn-primary {
-  background-color: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #2563EB 100%);
   color: var(--color-white);
-  box-shadow: var(--shadow-sm), var(--glow-primary);
+  box-shadow: var(--shadow-md), var(--glow-primary);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
-  box-shadow: var(--shadow-md), var(--glow-primary-strong);
+  background: linear-gradient(135deg, var(--color-primary-hover) 0%, #1D4ED8 100%);
+  box-shadow: var(--shadow-lg), var(--glow-primary-strong);
 }
 
 .btn-primary:active:not(:disabled) {
@@ -65,34 +65,36 @@
 }
 
 .btn-secondary {
-  background-color: var(--color-white);
-  color: var(--color-gray-700);
+  background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-elevated) 100%);
+  color: var(--color-text);
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: var(--color-gray-50);
-  border-color: var(--color-gray-300);
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-strong);
 }
 
 .btn-ghost {
   background-color: transparent;
-  color: var(--color-gray-600);
+  color: var(--color-text-secondary);
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background-color: var(--color-gray-100);
-  color: var(--color-gray-900);
+  background-color: var(--color-surface);
+  color: var(--color-text);
 }
 
 .btn-danger {
-  background-color: var(--color-error);
+  background: linear-gradient(135deg, var(--color-error) 0%, #DC2626 100%);
   color: var(--color-white);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background-color: #DC2626;
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  box-shadow: var(--shadow-lg);
 }
 
 /* States */
@@ -167,7 +169,7 @@
   height: 20px;
 }
 
-/* Icon Button */
+/* Icon Button - Dark Theme */
 .icon-btn {
   display: inline-flex;
   align-items: center;
@@ -179,12 +181,12 @@
     background-color var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out);
   background: transparent;
-  color: var(--color-gray-500);
+  color: var(--color-text-secondary);
 }
 
 .icon-btn:hover {
-  background-color: var(--color-gray-100);
-  color: var(--color-gray-700);
+  background-color: var(--color-surface);
+  color: var(--color-text);
 }
 
 .icon-btn:focus-visible {

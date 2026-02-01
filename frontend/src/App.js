@@ -109,7 +109,7 @@ function App() {
     
     // 4. Speak narrative to completion (BLOCKING)
     if (result.narrative && !muted) {
-      await speakAndWait(result.narrative, { rate: 0.95 });
+      await speakAndWait(result.narrative, { rate: 1.3 });
     }
     
     // 5. Check if still running, then loop
@@ -155,7 +155,7 @@ function App() {
     
     // Speak the detailed description (blocking)
     if (result.description && !muted) {
-      await speakAndWait(result.description, { rate: 0.95 });
+      await speakAndWait(result.description, { rate: 1.3 });
     }
   }, [isStreaming, isProcessing, isSpeaking, captureFrame, describeSceneDetailed, speakAndWait, muted]);
   

@@ -1,12 +1,26 @@
 /**
- * People Page Styles
+ * People Page Styles - Dark Theme
  */
 
 .people-page {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-bg-subtle);
+  background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-subtle) 50%, var(--color-bg) 100%);
+  position: relative;
+}
+
+/* Subtle gradient glow */
+.people-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 400px;
+  background: radial-gradient(ellipse at center top, rgba(6, 182, 212, 0.08) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 .people-container {
@@ -17,6 +31,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 /* Page Header */
@@ -35,7 +51,7 @@
 .page-title {
   font-size: var(--text-3xl);
   font-weight: var(--font-bold);
-  color: var(--color-text);
+  color: var(--color-text-primary);
   margin: 0 0 var(--space-2);
 }
 

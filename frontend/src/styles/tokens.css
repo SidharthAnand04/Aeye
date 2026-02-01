@@ -1,43 +1,48 @@
 /**
  * Aeye Design System Tokens
- * OpenAI-inspired, blue + white theme with premium aesthetics
+ * Modern dark theme with gradients and premium aesthetics
  */
 
 :root {
   /* ===== COLOR TOKENS ===== */
   
   /* Primary Blue Palette */
-  --color-primary: #2563EB;
-  --color-primary-hover: #1D4ED8;
-  --color-primary-active: #1E40AF;
-  --color-primary-light: #DBEAFE;
-  --color-primary-lighter: #EFF6FF;
-  --color-primary-focus-ring: rgba(37, 99, 235, 0.4);
+  --color-primary: #3B82F6;
+  --color-primary-hover: #2563EB;
+  --color-primary-active: #1D4ED8;
+  --color-primary-light: rgba(59, 130, 246, 0.15);
+  --color-primary-lighter: rgba(59, 130, 246, 0.08);
+  --color-primary-focus-ring: rgba(59, 130, 246, 0.4);
   
-  /* Neutral Grays */
+  /* Accent Colors */
+  --color-accent-purple: #8B5CF6;
+  --color-accent-cyan: #06B6D4;
+  --color-accent-pink: #EC4899;
+  
+  /* Neutral Dark Palette */
   --color-white: #FFFFFF;
-  --color-gray-50: #F9FAFB;
-  --color-gray-100: #F3F4F6;
-  --color-gray-200: #E5E7EB;
-  --color-gray-300: #D1D5DB;
-  --color-gray-400: #9CA3AF;
-  --color-gray-500: #6B7280;
-  --color-gray-600: #4B5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1F2937;
-  --color-gray-900: #111827;
-  --color-gray-950: #030712;
+  --color-gray-50: #18181B;
+  --color-gray-100: #1F1F23;
+  --color-gray-200: #27272A;
+  --color-gray-300: #3F3F46;
+  --color-gray-400: #52525B;
+  --color-gray-500: #71717A;
+  --color-gray-600: #A1A1AA;
+  --color-gray-700: #D4D4D8;
+  --color-gray-800: #E4E4E7;
+  --color-gray-900: #F4F4F5;
+  --color-gray-950: #FAFAFA;
   
   /* Semantic Colors */
   --color-success: #10B981;
-  --color-success-light: #D1FAE5;
+  --color-success-light: rgba(16, 185, 129, 0.15);
   --color-warning: #F59E0B;
-  --color-warning-light: #FEF3C7;
+  --color-warning-light: rgba(245, 158, 11, 0.15);
   --color-error: #EF4444;
-  --color-error-light: #FEE2E2;
+  --color-error-light: rgba(239, 68, 68, 0.15);
   
   /* Detection Colors */
-  --color-detect-person: #2563EB;
+  --color-detect-person: #3B82F6;
   --color-detect-car: #EF4444;
   --color-detect-bike: #F59E0B;
   --color-detect-dog: #8B5CF6;
@@ -45,19 +50,23 @@
   --color-detect-door: #06B6D4;
   --color-detect-stairs: #EC4899;
   
-  /* Background & Surface */
-  --color-bg: var(--color-white);
-  --color-bg-subtle: var(--color-gray-50);
-  --color-surface: var(--color-white);
-  --color-surface-elevated: var(--color-white);
-  --color-border: var(--color-gray-200);
-  --color-border-subtle: var(--color-gray-100);
+  /* Background & Surface - Dark Theme */
+  --color-bg: #0A0A0B;
+  --color-bg-subtle: #0F0F10;
+  --color-bg-elevated: #141416;
+  --color-surface: #18181B;
+  --color-surface-elevated: #1F1F23;
+  --color-surface-hover: #27272A;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-strong: rgba(255, 255, 255, 0.12);
   
-  /* Text */
-  --color-text: var(--color-gray-900);
-  --color-text-secondary: var(--color-gray-600);
-  --color-text-muted: var(--color-gray-500);
-  --color-text-inverse: var(--color-white);
+  /* Text - Dark Theme */
+  --color-text: #F4F4F5;
+  --color-text-primary: #FAFAFA;
+  --color-text-secondary: #A1A1AA;
+  --color-text-muted: #71717A;
+  --color-text-inverse: #0A0A0B;
   
   /* ===== TYPOGRAPHY ===== */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -120,18 +129,20 @@
   --radius-3xl: 2rem;     /* 32px */
   --radius-full: 9999px;
   
-  /* ===== SHADOWS ===== */
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+  /* ===== SHADOWS - Enhanced for dark theme ===== */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3);
   
-  /* Glow Effects */
-  --glow-primary: 0 0 20px rgba(37, 99, 235, 0.15);
-  --glow-primary-strong: 0 0 40px rgba(37, 99, 235, 0.25);
+  /* Glow Effects - Enhanced */
+  --glow-primary: 0 0 20px rgba(59, 130, 246, 0.25);
+  --glow-primary-strong: 0 0 40px rgba(59, 130, 246, 0.35);
+  --glow-accent: 0 0 30px rgba(139, 92, 246, 0.2);
+  --glow-cyan: 0 0 30px rgba(6, 182, 212, 0.2);
   
   /* ===== TRANSITIONS ===== */
   --duration-fast: 150ms;
@@ -254,19 +265,83 @@ body {
   border: 0;
 }
 
-/* Gradient Background Mesh (subtle) */
+/* Gradient Background Mesh - Dark Theme */
 .bg-mesh {
   background-image: 
-    radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.03) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(37, 99, 235, 0.02) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.03) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(37, 99, 235, 0.02) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(236, 72, 153, 0.08) 0px, transparent 50%);
 }
 
-/* Glass Effect */
+/* Section backgrounds */
+.bg-section {
+  background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-subtle) 100%);
+}
+
+.bg-section-alt {
+  background: linear-gradient(180deg, var(--color-bg-subtle) 0%, var(--color-bg-elevated) 50%, var(--color-bg-subtle) 100%);
+}
+
+.bg-gradient-radial {
+  background: radial-gradient(ellipse at center, var(--color-surface) 0%, var(--color-bg) 70%);
+}
+
+.bg-gradient-hero {
+  background: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 0%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+    linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-subtle) 100%);
+}
+
+.bg-gradient-card {
+  background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-elevated) 100%);
+  border: 1px solid var(--color-border);
+}
+
+.bg-glow-blue {
+  position: relative;
+}
+
+.bg-glow-blue::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Glass Effect - Dark Theme */
 .glass {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(24, 24, 27, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--color-border);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border-subtle);
+}
+
+/* Noise texture overlay */
+.noise-overlay {
+  position: relative;
+}
+
+.noise-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
 }
