@@ -13,7 +13,8 @@ import './Layout.css';
 // Navigation Links
 const navLinks = [
   { path: '/', label: 'Home' },
-  { path: '/vision', label: 'Vision Assist' },
+  { path: '/vision', label: 'Live Camera' },
+  { path: '/media', label: 'Upload Media' },
   { path: '/people', label: 'People & Text' },
 ];
 

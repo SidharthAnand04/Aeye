@@ -17,7 +17,8 @@ import {
   ArrowRight,
   Sparkles,
   Shield,
-  Zap
+  Zap,
+  Upload
 } from 'lucide-react';
 import PageTransition from '../../components/layout/PageTransition';
 import { Button, FeatureCard } from '../../components/ui';
@@ -109,12 +110,12 @@ const LandingPage = () => {
             <div className="hero-actions">
               <Link to="/vision">
                 <Button size="lg" icon={<Eye />}>
-                  Start Vision Assist
+                  Live Camera
                 </Button>
               </Link>
-              <Link to="/people">
-                <Button size="lg" variant="secondary" icon={<Users />}>
-                  People & Text
+              <Link to="/media">
+                <Button size="lg" variant="secondary" icon={<Upload />}>
+                  Upload Media
                 </Button>
               </Link>
             </div>

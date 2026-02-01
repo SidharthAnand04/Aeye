@@ -16,7 +16,7 @@ import './styles/tokens.css';
 import { Layout } from './components/layout';
 
 // Pages
-import { LandingPage, VisionPage, PeoplePage } from './pages';
+import { LandingPage, VisionPage, PeoplePage, MediaPage } from './pages';
 
 // Providers
 import { ToastProvider } from './components/ui';
@@ -31,6 +31,7 @@ const AnimatedRoutes = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/vision" element={<VisionPage />} />
         <Route path="/people" element={<PeoplePage />} />
+        <Route path="/media" element={<MediaPage />} />
       </Routes>
     </AnimatePresence>
   );
