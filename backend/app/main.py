@@ -99,6 +99,24 @@ async def health_check():
 
 
 # ============================================================================
+# IP Webcam Configuration
+# ============================================================================
+
+@app.get("/config/ip-webcam")
+async def get_ip_webcam_config():
+    """Get IP Webcam configuration for phone camera streaming."""
+    settings = get_settings()
+    ip_webcam_url = settings.ip_webcam_url
+    
+    return {
+        "enabled": bool(ip_webcam_url),
+        "url": ip_webcam_url if ip_webcam_url else None,
+        "video_url": f"{ip_webcam_url}/video" if ip_webcam_url else None,
+        "shot_url": f"{ip_webcam_url}/shot.jpg" if ip_webcam_url else None,
+    }
+
+
+# ============================================================================
 # Detection Endpoint
 # ============================================================================
 

@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     agent_global_rate_limit_seconds: float = Field(default=1.5, ge=0.5, le=10.0)
     agent_proximity_override_threshold: float = Field(default=0.15, ge=0.0, le=1.0)
     
+    # IP Webcam Configuration (optional)
+    ip_webcam_url: str = Field(
+        default="",
+        description="IP Webcam stream URL (e.g., http://192.168.1.100:8080)"
+    )
+    
     # Server Configuration
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8000)

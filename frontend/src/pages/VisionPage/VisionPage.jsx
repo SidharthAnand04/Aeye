@@ -18,7 +18,8 @@ import {
   ChevronLeft,
   Info,
   Loader2,
-  Sparkles
+  Sparkles,
+  Smartphone
 } from 'lucide-react';
 import PageTransition from '../../components/layout/PageTransition';
 import { 
@@ -55,6 +56,7 @@ const VisionPage = () => {
   const [showTrace, setShowTrace] = useState(false);
   const [lastTrace, setLastTrace] = useState(null);
   const [currentState, setCurrentState] = useState('idle'); // idle, capturing, thinking, speaking, done
+  const [selectedCameraSource, setSelectedCameraSource] = useState('local'); // 'local' or 'ip-webcam'
   
   // Refs
   const overlayRef = useRef(null);
@@ -65,10 +67,18 @@ const VisionPage = () => {
     videoRef, 
     isStreaming, 
     error: cameraError, 
+    cameraSource,
+    ipWebcamConfig,
     startCamera, 
     stopCamera,
-    captureFrame 
+    captureFrame,
+    fetchIpWebcamConfig
   } = useCamera();
+  
+  // Fetch IP Webcam config on mount
+  useEffect(() => {
+    fetchIpWebcamConfig();
+  }, [fetchIpWebcamConfig]);
   
   const {
     detections,
@@ -177,12 +187,17 @@ const VisionPage = () => {
   // Start live mode
   const handleStartLive = useCallback(async () => {
     if (!isStreaming) {
-      await startCamera();
+      await startCamera(selectedCameraSource);
     }
     liveLoopRef.current = true;
     setIsLiveRunning(true);
     runLiveLoop();
-  }, [isStreaming, startCamera, runLiveLoop]);
+  }, [isStreaming, startCamera, runLiveLoop, selectedCameraSource]);
+
+  // Handle starting camera with selected source
+  const handleStartCamera = useCallback(async () => {
+    await startCamera(selectedCameraSource);
+  }, [startCamera, selectedCameraSource]);
 
   // Stop live mode
   const handleStopLive = useCallback(() => {
@@ -405,16 +420,35 @@ const VisionPage = () => {
 
                 {/* Camera Controls */}
                 <div className="control-group">
-                  <h3 className="control-label">Camera</h3>
+                  <h3 className="control-label">Camera Source</h3>
                   <div className="control-actions">
+                    <SegmentedControl
+                      options={[
+                        { value: 'local', label: 'Webcam', icon: <Camera size={14} /> },
+                        { 
+                          value: 'ip-webcam', 
+                          label: 'Phone', 
+                          icon: <Smartphone size={14} />,
+                          disabled: !ipWebcamConfig?.enabled
+                        }
+                      ]}
+                      value={selectedCameraSource}
+                      onChange={setSelectedCameraSource}
+                      disabled={isStreaming}
+                    />
+                    {selectedCameraSource === 'ip-webcam' && !ipWebcamConfig?.enabled && (
+                      <p className="camera-hint">Set IP_WEBCAM_URL in backend .env</p>
+                    )}
+                  </div>
+                  <div className="control-actions" style={{ marginTop: 'var(--space-2)' }}>
                     {!isStreaming ? (
                       <Button
                         variant="secondary"
-                        onClick={startCamera}
-                        icon={<Camera />}
+                        onClick={handleStartCamera}
+                        icon={selectedCameraSource === 'ip-webcam' ? <Smartphone /> : <Camera />}
                         fullWidth
                       >
-                        Start Camera
+                        {selectedCameraSource === 'ip-webcam' ? 'Connect Phone' : 'Start Camera'}
                       </Button>
                     ) : (
                       <Button
@@ -427,6 +461,11 @@ const VisionPage = () => {
                       </Button>
                     )}
                   </div>
+                  {cameraSource === 'ip-webcam' && isStreaming && (
+                    <Badge variant="info" className="camera-badge">
+                      <Smartphone size={12} /> Phone Camera Active
+                    </Badge>
+                  )}
                 </div>
               </div>
             </Card>
