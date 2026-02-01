@@ -73,6 +73,7 @@
   padding: var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--color-border-subtle);
   flex-shrink: 0;
+  min-height: 56px;
 }
 
 .drawer-title {
@@ -80,6 +81,11 @@
   font-weight: var(--font-semibold);
   color: var(--color-text);
   margin: 0;
+  flex: 1;
+}
+
+.drawer-header .icon-btn {
+  flex-shrink: 0;
 }
 
 /* Content */
