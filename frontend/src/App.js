@@ -19,6 +19,8 @@ import ControlPanel from './components/ControlPanel';
 import TracePanel from './components/TracePanel';
 import SpeechLog from './components/SpeechLog';
 import StatusBar from './components/StatusBar';
+import PeopleTab from './components/PeopleTab';
+import InteractionRecorder from './components/InteractionRecorder';
 
 // Hooks
 import { useCamera } from './hooks/useCamera';
@@ -32,6 +34,8 @@ function App() {
   const [showTrace, setShowTrace] = useState(true);
   const [muted, setMuted] = useState(false);
   const [lastTrace, setLastTrace] = useState(null);
+  const [activeTab, setActiveTab] = useState('assist');  // 'assist' or 'people'
+  const [peopleRefreshTrigger, setPeopleRefreshTrigger] = useState(0);
   
   // Refs
   const canvasRef = useRef(null);
@@ -55,6 +59,7 @@ function App() {
     getLiveNarrative,
     readText,
     describeScene,
+    describeSceneDetailed,
     isProcessing
   } = useDetection();
   
@@ -132,6 +137,28 @@ function App() {
     stopSpeech();  // Stop any ongoing speech
   }, [stopSpeech]);
   
+  // Handle describe scene button
+  const handleDescribeScene = useCallback(async () => {
+    if (!isStreaming || isProcessing || isSpeaking) {
+      return;
+    }
+    
+    // Capture current frame
+    const frame = captureFrame();
+    if (!frame) {
+      console.error('Failed to capture frame');
+      return;
+    }
+    
+    // Get detailed scene description
+    const result = await describeSceneDetailed(frame);
+    
+    // Speak the detailed description (blocking)
+    if (result.description && !muted) {
+      await speakAndWait(result.description, { rate: 0.95 });
+    }
+  }, [isStreaming, isProcessing, isSpeaking, captureFrame, describeSceneDetailed, speakAndWait, muted]);
+  
   // Separate detection loop for visual overlays (runs independently)
   const detectionIntervalRef = useRef(null);
   
@@ -203,21 +230,60 @@ function App() {
           )}
         </div>
         
-        {/* Control panel */}
-        <div className="controls-section">
-          <ControlPanel
-            isLiveRunning={isLiveRunning}
-            isStreaming={isStreaming}
-            onStartLive={handleStartLive}
-            onStopLive={handleStopLive}
-            onStartCamera={startCamera}
-            onStopCamera={stopCamera}
-            muted={muted}
-            setMuted={setMuted}
-            isProcessing={isProcessing}
-            isSpeaking={isSpeaking}
-          />
+        {/* Tab Navigation */}
+        <div className="tab-navigation">
+          <button
+            className={`tab-btn ${activeTab === 'assist' ? 'active' : ''}`}
+            onClick={() => setActiveTab('assist')}
+          >
+            🎯 Assist
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'people' ? 'active' : ''}`}
+            onClick={() => setActiveTab('people')}
+          >
+            👥 People
+          </button>
         </div>
+        
+        {/* Tab Content */}
+        {activeTab === 'assist' ? (
+          <>
+            {/* Control panel */}
+            <div className="controls-section">
+              <ControlPanel
+                isLiveRunning={isLiveRunning}
+                isStreaming={isStreaming}
+                onStartLive={handleStartLive}
+                onStopLive={handleStopLive}
+                onStartCamera={startCamera}
+                onStopCamera={stopCamera}
+                muted={muted}
+                setMuted={setMuted}
+                isProcessing={isProcessing}
+                isSpeaking={isSpeaking}
+                onDescribeScene={handleDescribeScene}
+              />
+              
+              {/* Interaction Recorder */}
+              <InteractionRecorder
+                captureFrame={captureFrame}
+                isStreaming={isStreaming}
+                onInteractionComplete={(result) => {
+                  setPeopleRefreshTrigger(prev => prev + 1);
+                  // Optionally speak the summary
+                  if (result.summary?.summary && !muted) {
+                    speak(`Recorded conversation with ${result.person_name}. ${result.summary.summary}`);
+                  }
+                }}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="controls-section">
+            <PeopleTab refreshTrigger={peopleRefreshTrigger} />
+          </div>
+        )}
         
         {/* Side panel for judges */}
         <aside className="side-panel">

@@ -17,6 +17,9 @@ dependencies = [
     "httpx>=0.26.0",
     "python-dotenv>=1.0.0",
     "pillow>=10.2.0",
+    "sqlalchemy>=2.0.0",
+    "deepface>=0.0.79",
+    "tf-keras>=2.15.0",
 ]
 
 [project.optional-dependencies]

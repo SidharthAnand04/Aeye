@@ -27,7 +27,8 @@ function ControlPanel({
   muted,
   setMuted,
   isProcessing,
-  isSpeaking
+  isSpeaking,
+  onDescribeScene
 }) {
   return (
     <div className="control-panel">
@@ -90,6 +91,22 @@ function ControlPanel({
             </div>
           )
         }
+      </div>
+      
+      {/* Quick Actions */}
+      <div className="control-group">
+        <h3 className="control-group-title">Quick Actions</h3>
+        
+        {/* Describe Scene Button */}
+        <button
+          className="btn btn-secondary btn-large"
+          onClick={onDescribeScene}
+          disabled={!isStreaming || isProcessing || isSpeaking}
+          aria-label="Describe scene in detail"
+          title="Get a comprehensive description of the current scene including all visible text"
+        >
+          🔍 Describe Scene
+        </button>
       </div>
       
       {/* Settings */}

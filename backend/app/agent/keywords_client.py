@@ -343,6 +343,180 @@ Keep it natural and informative, as if you're reading aloud to someone."""
             # Fallback: just return the raw OCR text
             return f"The text reads: {ocr_text}", inference_time, trace
     
+    async def generate_detailed_scene_description(
+        self,
+        image_base64: str,
+        ocr_text: Optional[str] = None,
+        objects: Optional[List[TrackedObject]] = None
+    ) -> tuple[str, float, Dict[str, Any]]:
+        """
+        Generate a comprehensive, detailed scene description with OCR text.
+        
+        This provides much more information than the navigation-focused descriptions:
+        - Full environmental description
+        - All visible text from signs, labels, screens
+        - Object locations and relationships
+        - Spatial layout and context
+        - Detailed information for understanding the complete scene
+        
+        Args:
+            image_base64: Base64 encoded image
+            ocr_text: Optional OCR text detected from the scene
+            objects: Optional list of detected objects
+            
+        Returns:
+            Tuple of (detailed_description, inference_time_ms, trace)
+        """
+        start = time.time()
+        
+        # Prepare image in OpenAI format
+        if "," in image_base64:
+            if not image_base64.startswith("data:"):
+                image_base64 = image_base64.split(",")[1]
+                image_url = f"data:image/jpeg;base64,{image_base64}"
+            else:
+                image_url = image_base64
+        else:
+            image_url = f"data:image/jpeg;base64,{image_base64}"
+        
+        # Build detailed prompt - concise but comprehensive
+        prompt_parts = [
+            "Describe this scene for a blind person in UNDER 50 WORDS.",
+            "",
+            "FORMAT: Direct, factual statements. No filler words.",
+            "",
+            "INCLUDE:",
+            "1. Environment type (indoor/outdoor, what kind of space)",
+            "2. Key objects and their locations (left/right/center/ahead)",
+            "3. Any visible TEXT from signs, labels, screens",
+            "4. People and what they're doing",
+            "5. Important spatial details",
+            "",
+            "STYLE: Clear, concise, actionable. Like navigation guidance but more complete."
+        ]
+        
+        if ocr_text:
+            prompt_parts.extend([
+                "",
+                f"TEXT IN SCENE: {ocr_text}",
+                "State what the text says and where it appears."
+            ])
+        
+        if objects and len(objects) > 0:
+            obj_summary = ", ".join([f"{obj.label}" for obj in objects[:10]])
+            prompt_parts.extend([
+                "",
+                f"DETECTED: {obj_summary}",
+                "Mention key objects with positions."
+            ])
+        
+        prompt_parts.append("")
+        prompt_parts.append("Keep under 80 words. Be specific and direct.")
+        
+        detailed_prompt = "\n".join(prompt_parts)
+        
+        user_content = [
+            {"type": "text", "text": detailed_prompt},
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": image_url
+                }
+            }
+        ]
+        
+        # Keywords AI request payload
+        payload = {
+            "model": "claude-sonnet-4-20250514",
+            "messages": [
+                {"role": "user", "content": user_content}
+            ],
+            "max_tokens": 200,  # Shorter response for concise descriptions
+            "temperature": 0.4,
+            "customer_identifier": "aeye-demo",
+            "metadata": {
+                "feature": "detailed_scene_description",
+                "has_objects": objects is not None,
+                "has_ocr": ocr_text is not None
+            }
+        }
+        
+        trace = {
+            "request": {
+                "model": payload["model"],
+                "object_count": len(objects) if objects else 0,
+                "has_ocr": ocr_text is not None,
+                "has_image": True,
+                "max_tokens": 200
+            }
+        }
+        
+        try:
+            response = await self.client.post(
+                "/chat/completions",
+                json=payload
+            )
+            response.raise_for_status()
+            
+            result = response.json()
+            
+            description = result["choices"][0]["message"]["content"]
+            
+            inference_time = (time.time() - start) * 1000
+            
+            trace["response"] = {
+                "success": True,
+                "tokens_used": result.get("usage", {}),
+                "inference_ms": inference_time
+            }
+            
+            logger.info(f"Detailed scene description generated in {inference_time:.1f}ms")
+            return description.strip(), inference_time, trace
+            
+        except Exception as e:
+            inference_time = (time.time() - start) * 1000
+            logger.error(f"Keywords AI detailed description error: {e}")
+            trace["response"] = {
+                "success": False,
+                "error": str(e),
+                "inference_ms": inference_time
+            }
+            
+            # Fallback to simpler description
+            fallback = self._fallback_detailed_description(objects, ocr_text)
+            return fallback, inference_time, trace
+    
+    def _fallback_detailed_description(
+        self, 
+        objects: Optional[List[TrackedObject]], 
+        ocr_text: Optional[str]
+    ) -> str:
+        """Generate a fallback detailed description when API fails."""
+        parts = []
+        
+        if ocr_text:
+            parts.append(f"Text visible in the scene: {ocr_text}")
+        
+        if objects and len(objects) > 0:
+            obj_list = ", ".join([obj.label for obj in objects])
+            parts.append(f"Objects detected: {obj_list}")
+            
+            # Group by position
+            left = [obj.label for obj in objects if obj.bbox.center_x < 0.35]
+            center = [obj.label for obj in objects if 0.35 <= obj.bbox.center_x <= 0.65]
+            right = [obj.label for obj in objects if obj.bbox.center_x > 0.65]
+            
+            if center:
+                parts.append(f"Center: {', '.join(set(center))}")
+            if left:
+                parts.append(f"Left side: {', '.join(set(left))}")
+            if right:
+                parts.append(f"Right side: {', '.join(set(right))}")
+        else:
+            parts.append("Unable to provide detailed analysis at this time.")
+        
+        return ". ".join(parts) + "."
+    
     def _fallback_description(self, objects: Optional[List[TrackedObject]]) -> str:
         """Generate a simple fallback description when API fails."""
         if not objects:

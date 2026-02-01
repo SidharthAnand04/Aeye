@@ -173,6 +173,55 @@ export function useDetection() {
     }
   }, []);
   
+  /**
+   * Get detailed scene description with OCR and comprehensive information
+   */
+  const describeSceneDetailed = useCallback(async (frameBase64) => {
+    setIsProcessing(true);
+    
+    try {
+      const response = await fetch(`${API_BASE}/describe/detailed`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image_base64: frameBase64,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Update detections for overlay
+      if (data.detections) {
+        setDetections(data.detections);
+      }
+      if (data.timing?.total_ms) {
+        setLatency(data.timing.total_ms);
+      }
+      
+      return {
+        description: data.description || 'Unable to describe scene in detail',
+        ocrText: data.ocr_text,
+        timing: data.timing
+      };
+      
+    } catch (err) {
+      console.error('Detailed describe error:', err);
+      return {
+        description: 'Error getting detailed scene description',
+        ocrText: null,
+        timing: null
+      };
+    } finally {
+      setIsProcessing(false);
+    }
+  }, []);
+  
   return {
     detections,
     latency,
@@ -181,6 +230,7 @@ export function useDetection() {
     getLiveNarrative,  // New blocking live mode
     readText,
     describeScene,
+    describeSceneDetailed,  // New detailed description
     isProcessing
   };
 }

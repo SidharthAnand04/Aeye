@@ -21,6 +21,7 @@ from app.models import (
 )
 from app.perception import get_detector, get_ocr_engine, get_tracker
 from app.agent import get_agent, get_keywords_client
+from app.routes.memory import router as memory_router
 
 
 # Configure logging
@@ -77,6 +78,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include memory routes
+app.include_router(memory_router)
 
 
 # ============================================================================
@@ -237,6 +241,70 @@ async def describe_scene(request: DescribeRequest):
         
     except Exception as e:
         logger.error(f"Describe error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# Detailed Scene Description Endpoint
+# ============================================================================
+
+@app.post("/describe/detailed")
+async def describe_scene_detailed(request: DescribeRequest):
+    """
+    Generate a comprehensive, detailed scene description including OCR.
+    
+    This endpoint provides:
+    - Full environmental description
+    - All visible text from signs, labels, screens
+    - Object locations and spatial relationships
+    - Complete scene understanding with maximum detail
+    
+    Target latency: <3000ms (includes OCR + vision model)
+    """
+    try:
+        detector = get_detector()
+        tracker = get_tracker()
+        ocr = get_ocr_engine()
+        keywords = get_keywords_client()
+        
+        start = time.time()
+        
+        # Run detection for context
+        detections, detect_time = detector.detect_from_base64(request.image_base64)
+        timestamp = time.time()
+        tracked = tracker.update(detections, timestamp)
+        
+        # Run OCR to extract any visible text
+        raw_text, confidence, ocr_time = ocr.read_text_from_base64(
+            request.image_base64
+        )
+        
+        # Generate comprehensive scene description with OCR context
+        description, llm_time, trace = await keywords.generate_detailed_scene_description(
+            image_base64=request.image_base64,
+            ocr_text=raw_text if raw_text and raw_text.strip() else None,
+            objects=tracked
+        )
+        
+        total_time = (time.time() - start) * 1000
+        
+        logger.info(f"Detailed scene description in {total_time:.1f}ms (detect: {detect_time:.1f}ms, ocr: {ocr_time:.1f}ms, llm: {llm_time:.1f}ms)")
+        
+        return {
+            "description": description,
+            "ocr_text": raw_text if raw_text else None,
+            "detections": [d.model_dump() for d in detections],
+            "inference_time_ms": total_time,
+            "timing": {
+                "detection_ms": detect_time,
+                "ocr_ms": ocr_time,
+                "llm_ms": llm_time,
+                "total_ms": total_time
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Detailed describe error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

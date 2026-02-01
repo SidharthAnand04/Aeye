@@ -59,6 +59,23 @@ export async function describeScene(imageBase64) {
 }
 
 /**
+ * Get detailed scene description with OCR
+ */
+export async function describeSceneDetailed(imageBase64) {
+  const response = await fetch(`${API_BASE}/describe/detailed`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image_base64: imageBase64 }),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Detailed describe error: ${response.status}`);
+  }
+  
+  return response.json();
+}
+
+/**
  * Health check
  */
 export async function checkHealth() {
