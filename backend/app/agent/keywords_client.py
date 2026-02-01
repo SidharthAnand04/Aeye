@@ -17,7 +17,7 @@ import httpx
 from app.config import get_settings
 from app.models import Detection, TrackedObject
 
-model_name = "anthropic/claude-sonnet-4-5-20250929"
+model_name = "anthropic/claude-3-5-haiku-latest"
 logger = logging.getLogger(__name__)
 
 
