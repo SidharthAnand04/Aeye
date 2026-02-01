@@ -205,9 +205,9 @@ class KeywordsAIClient:
             }
         ]
         
-        # Keywords AI request payload with Claude Sonnet for vision
+        # Keywords AI request payload with Claude Haiku for fast vision
         payload = {
-            "model": "claude-sonnet-4-20250514",  # Use Sonnet for better vision
+            "model": "anthropic/claude-3-haiku-20240307",  # Use Haiku for faster responses
             "messages": [
                 {"role": "system", "content": SCENE_NARRATOR_PROMPT},
                 {"role": "user", "content": user_content}
@@ -301,7 +301,7 @@ Read this text naturally for a blind user. If it's a sign, menu, or label, expla
 Keep it natural and informative, as if you're reading aloud to someone."""
         
         payload = {
-            "model": "claude-sonnet-4-20250514",
+            "model": "anthropic/claude-3-haiku-20240307",
             "messages": [
                 {
                     "role": "user",
@@ -427,7 +427,7 @@ Keep it natural and informative, as if you're reading aloud to someone."""
         
         # Keywords AI request payload
         payload = {
-            "model": "claude-sonnet-4-20250514",
+            "model": "anthropic/claude-3-haiku-20240307",
             "messages": [
                 {"role": "user", "content": user_content}
             ],
