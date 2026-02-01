@@ -1,0 +1,31 @@
+# Aeye Backend Requirements
+# Compatible with pip/venv
+
+# Web framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+
+# Data validation
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Database
+sqlalchemy>=2.0.0
+
+# ML/Computer Vision
+numpy>=1.26.0
+opencv-python-headless>=4.9.0
+ultralytics>=8.1.0
+easyocr>=1.7.1
+pillow>=10.2.0
+deepface>=0.0.83
+pytesseract>=0.3.10
+tf-keras>=2.15.0
+scipy>=1.11.0
+
+# HTTP client
+httpx>=0.26.0
+
+# Configuration
+python-dotenv>=1.0.0
