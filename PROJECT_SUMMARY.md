@@ -105,7 +105,6 @@
 ✅ **Cost-effective inference** — Haiku model pricing suitable for high-frequency calls  
 
 ### **Weaknesses**
-⚠️ **Limited detection classes** — Only 7 classes vs. full COCO dataset (80 classes)  
 ⚠️ **Whisper latency** — Speech-to-text adds 1-2s per recording (blocking)  
 ⚠️ **Offline dependency** — Requires Keywords AI API key; no offline mode  
 ⚠️ **Face recognition setup** — Requires dlib/cmake on some systems (installation friction)  
