@@ -357,7 +357,7 @@ const MediaPage = () => {
     
     if (result.description && !muted) {
       setCurrentState('speaking');
-      await speakAndWait(result.description, { rate: 1.3 });
+      await speakAndWait(result.description, { rate: 1.0 });
     }
     
     setCurrentState('idle');

@@ -163,7 +163,7 @@ const VisionPage = () => {
     
     if (result.narrative && !muted) {
       setCurrentState('speaking');
-      await speakAndWait(result.narrative, { rate: 1.3 });
+      await speakAndWait(result.narrative, { rate: 1.0 });
     }
     
     setCurrentState('done');
@@ -204,7 +204,7 @@ const VisionPage = () => {
     
     if (result.description && !muted) {
       setCurrentState('speaking');
-      await speakAndWait(result.description, { rate: 1.3 });
+      await speakAndWait(result.description, { rate: 1.0 });
     }
     
     setCurrentState('idle');

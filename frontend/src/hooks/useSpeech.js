@@ -72,7 +72,7 @@ export function useSpeech() {
     
     // Configure utterance
     utterance.voice = voiceRef.current;
-    utterance.rate = options.rate || 1.3;  // 1.3x speed for faster narration
+    utterance.rate = options.rate || 1.0;  // Normal speed
     utterance.pitch = options.pitch || 1.0;
     utterance.volume = options.volume || 1.0;
     
