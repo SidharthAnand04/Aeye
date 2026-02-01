@@ -34,7 +34,8 @@ import {
   Card,
   Badge,
   ProcessingIndicator,
-  SpeakingIndicator
+  SpeakingIndicator,
+  Slider
 } from '../../components/ui';
 import { useDetection } from '../../hooks/useDetection';
 import { useSpeech } from '../../hooks/useSpeech';
@@ -65,6 +66,7 @@ const MediaPage = () => {
   const [videoDuration, setVideoDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   
   // Refs
   const videoRef = useRef(null);
@@ -418,6 +420,13 @@ const MediaPage = () => {
     }
   }, [isLiveRunning, handleStopLive]);
 
+  // Update video playback speed
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = playbackSpeed;
+    }
+  }, [playbackSpeed]);
+
   // Detection loop for video playback (without live narration)
   useEffect(() => {
     if (mediaType === 'video' && isPlaying && !isLiveRunning) {
@@ -740,6 +749,23 @@ const MediaPage = () => {
                     />
                   </div>
                 </div>
+
+                {/* Playback Speed (video only) */}
+                {mediaType === 'video' && (
+                  <div className="control-group">
+                    <h3 className="control-label">Playback Speed</h3>
+                    <div className="control-settings">
+                      <Slider
+                        min={0.5}
+                        max={2}
+                        step={0.25}
+                        value={playbackSpeed}
+                        onChange={(value) => setPlaybackSpeed(value)}
+                        label={`${playbackSpeed}x`}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </Card>
           </div>
