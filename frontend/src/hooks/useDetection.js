@@ -16,18 +16,20 @@ export function useDetection() {
   const [detections, setDetections] = useState([]);
   const [latency, setLatency] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDetecting, setIsDetecting] = useState(false); // Separate flag for detection
   const [lastNarrative, setLastNarrative] = useState('');
   
   const timestampRef = useRef(0);
   
   /**
    * Run detection for visual overlays only (no speech)
-   * Fast endpoint for bounding box rendering
+   * Fast endpoint for bounding box rendering - runs independently of narration
    */
   const processFrame = useCallback(async (frameBase64) => {
-    if (isProcessing) return null;
+    // Use separate isDetecting flag so detection can run while narration is processing
+    if (isDetecting) return null;
     
-    setIsProcessing(true);
+    setIsDetecting(true);
     
     try {
       timestampRef.current = Date.now() / 1000;
@@ -58,9 +60,9 @@ export function useDetection() {
       console.error('Detection error:', err);
       return null;
     } finally {
-      setIsProcessing(false);
+      setIsDetecting(false);
     }
-  }, [isProcessing]);
+  }, [isDetecting]);
   
   /**
    * Live mode - get scene narrative (blocking call)

@@ -427,19 +427,19 @@ const MediaPage = () => {
     }
   }, [playbackSpeed]);
 
-  // Detection loop for video playback (without live narration)
+  // Detection loop for video playback - runs continuously regardless of live narration
   useEffect(() => {
-    if (mediaType === 'video' && isPlaying && !isLiveRunning) {
+    if (mediaType === 'video' && isPlaying) {
       const interval = setInterval(async () => {
         const frame = captureFrame();
         if (frame) {
           await processFrame(frame);
         }
-      }, 500);
+      }, 200); // Faster detection rate (200ms = 5 FPS)
       
       return () => clearInterval(interval);
     }
-  }, [mediaType, isPlaying, isLiveRunning, captureFrame, processFrame]);
+  }, [mediaType, isPlaying, captureFrame, processFrame]);
 
   // Process image on load
   const handleImageLoad = useCallback(async () => {

@@ -136,7 +136,7 @@ const VisionPage = () => {
     });
   }, [detections, videoRef]);
 
-  // Live loop
+  // Live loop - only handles narration, not detection
   const runLiveLoop = useCallback(async () => {
     if (!liveLoopRef.current || !isStreaming) return;
     
@@ -168,6 +168,7 @@ const VisionPage = () => {
     
     setCurrentState('done');
     
+    // Continue the narration loop after speech completes
     if (liveLoopRef.current) {
       setTimeout(() => runLiveLoop(), 100);
     }
@@ -209,17 +210,18 @@ const VisionPage = () => {
     setCurrentState('idle');
   }, [isStreaming, isProcessing, isSpeaking, captureFrame, describeSceneDetailed, speakAndWait, muted]);
 
-  // Detection loop for overlays
+  // Detection loop for overlays - runs continuously regardless of live mode
   const detectionIntervalRef = useRef(null);
   
   useEffect(() => {
-    if (isStreaming && !isLiveRunning) {
+    if (isStreaming) {
+      // Run detection continuously for bounding box updates
       detectionIntervalRef.current = setInterval(async () => {
         const frame = captureFrame();
         if (frame) {
           await processFrame(frame);
         }
-      }, 500);
+      }, 200); // Faster detection rate (200ms = 5 FPS)
     } else {
       if (detectionIntervalRef.current) {
         clearInterval(detectionIntervalRef.current);
@@ -231,7 +233,7 @@ const VisionPage = () => {
         clearInterval(detectionIntervalRef.current);
       }
     };
-  }, [isStreaming, isLiveRunning, captureFrame, processFrame]);
+  }, [isStreaming, captureFrame, processFrame]);
 
   // Get status indicator
   const getStatusContent = () => {
