@@ -1,0 +1,107 @@
+/**
+ * SegmentedControl Styles
+ */
+
+.segmented-control {
+  display: inline-flex;
+  position: relative;
+  background-color: var(--color-gray-100);
+  border-radius: var(--radius-xl);
+  padding: 4px;
+}
+
+.segmented-full {
+  width: 100%;
+}
+
+/* Sizes */
+.segmented-sm {
+  height: 36px;
+}
+
+.segmented-md {
+  height: 44px;
+}
+
+.segmented-lg {
+  height: 52px;
+}
+
+/* Animated Indicator */
+.segmented-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  background-color: var(--color-white);
+  border-radius: calc(var(--radius-xl) - 2px);
+  box-shadow: var(--shadow-sm);
+  z-index: 0;
+}
+
+/* Option */
+.segmented-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  position: relative;
+  z-index: 1;
+  background: none;
+  border: none;
+  padding: 0 var(--space-4);
+  font-family: var(--font-family);
+  font-weight: var(--font-medium);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+}
+
+.segmented-sm .segmented-option {
+  font-size: var(--text-xs);
+  padding: 0 var(--space-3);
+}
+
+.segmented-lg .segmented-option {
+  font-size: var(--text-base);
+  padding: 0 var(--space-6);
+}
+
+.segmented-option:hover:not(:disabled) {
+  color: var(--color-text);
+}
+
+.segmented-option-active {
+  color: var(--color-text);
+}
+
+.segmented-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.segmented-option:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+  border-radius: calc(var(--radius-xl) - 2px);
+}
+
+/* Icon */
+.segmented-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.segmented-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.segmented-lg .segmented-icon svg {
+  width: 20px;
+  height: 20px;
+}

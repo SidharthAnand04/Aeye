@@ -1,0 +1,135 @@
+/**
+ * Card Styles
+ */
+
+/* Base Card */
+.card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-2xl);
+  transition: 
+    box-shadow var(--duration-normal) var(--ease-out),
+    transform var(--duration-normal) var(--ease-out);
+}
+
+/* Variants */
+.card-default {
+  border: 1px solid var(--color-border-subtle);
+}
+
+.card-elevated {
+  box-shadow: var(--shadow-md);
+  border: none;
+}
+
+.card-bordered {
+  border: 1px solid var(--color-border);
+  box-shadow: none;
+}
+
+.card-interactive {
+  border: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+}
+
+.card-interactive:hover {
+  border-color: var(--color-primary-light);
+  box-shadow: var(--shadow-md), var(--glow-primary);
+}
+
+/* Padding */
+.card-padding-none {
+  padding: 0;
+}
+
+.card-padding-sm {
+  padding: var(--space-4);
+}
+
+.card-padding-md {
+  padding: var(--space-6);
+}
+
+.card-padding-lg {
+  padding: var(--space-8);
+}
+
+/* Clickable */
+.card-clickable {
+  cursor: pointer;
+  border: none;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+}
+
+.card-clickable:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Card Parts */
+.card-header {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+  margin-bottom: var(--space-4);
+}
+
+.card-content {
+  flex: 1;
+}
+
+.card-footer {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-subtle);
+  margin-top: var(--space-4);
+}
+
+/* Feature Card */
+.feature-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-8);
+  text-align: center;
+  transition: 
+    border-color var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.feature-card:hover {
+  border-color: var(--color-primary-light);
+  box-shadow: var(--shadow-lg), var(--glow-primary);
+}
+
+.feature-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-light) 100%);
+  border-radius: var(--radius-xl);
+  color: var(--color-primary);
+  margin-bottom: var(--space-5);
+}
+
+.feature-card-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.feature-card-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+  line-height: var(--leading-tight);
+}
+
+.feature-card-description {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}
